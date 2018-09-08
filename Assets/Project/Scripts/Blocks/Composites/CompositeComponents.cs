@@ -17,7 +17,7 @@ namespace ECS.Blocks
         public Entity patternEntity ;
 
         // used prefab ID
-        public int i_prefabId ;
+        public int i_inPrefabIndex ;
     }
 
     public struct AssignComposites2PatternTag : IComponentData { }

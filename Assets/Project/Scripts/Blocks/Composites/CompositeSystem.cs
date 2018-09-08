@@ -240,7 +240,8 @@ namespace ECS.Blocks
             {
                 // get element from patern prefab to copy into group
                 //BlockCompositeBufferElement element = a_compositesPatternPrefabs [i_componentsPatternOffsetIndex + i_spareEntityIndex] ;
-                Blocks.BlockCompositeBufferElement patternPrefab = a_compositesPatternPrefabs [ i_componentsPatternOffsetIndex + i_spareEntityIndex ] ;
+                int i_compositeInPrefabIndex = i_componentsPatternOffsetIndex + i_spareEntityIndex ;
+                Blocks.BlockCompositeBufferElement patternPrefab = a_compositesPatternPrefabs [ i_compositeInPrefabIndex ] ;
                 //element.f3_position = patternPrefab.f3_position ; // assing new position
                 //element.i_prefabId = patternPrefab.i_prefabId ;
 
@@ -251,9 +252,8 @@ namespace ECS.Blocks
                 {
                      blockEntity = compositePattern.blockEntity, // assign grand parent entity to composite
                      patternEntity = requestPatternSetupEntity, // assign parent pattern group entity to composite
-                     i_prefabId = i_componentsPatternIndex // used prefab
-                } ; 
-                need prefab index position   
+                     i_inPrefabIndex = i_compositeInPrefabIndex // used prefab
+                } ;  
 
                 Common.BufferElements.EntityBuffer spareEntityBuffer = new Common.BufferElements.EntityBuffer () { 
                     entity = spareCompositeEntity 
@@ -320,6 +320,13 @@ namespace ECS.Blocks
             i_prefabsCount ++ ;
              
             return i_prefabsCount ;
+        }
+
+        static public BlockCompositeBufferElement _GetCompositeFromPatternPrefab ( int i_index )
+        {
+            BlockCompositeBufferElement blockCompositeBufferElement = a_compositesPatternPrefabs [ i_index ] ;
+
+            return blockCompositeBufferElement ;
         }
 
     }

@@ -114,7 +114,7 @@ namespace ECS.Blocks
         // struct CompositeJob : IJobParallelFor
         struct MovePatternDataJob : IJob
         {
-            [ReadOnly] public EntityCommandBuffer commandBuffer ; // concurrent is required for parallel job
+            public EntityCommandBuffer commandBuffer ; // concurrent is required for parallel job
             
             // public EntityArray a_entities;     
             
@@ -135,16 +135,23 @@ namespace ECS.Blocks
                     MovePatternComonent movePattern = movePatternData.a_movePattern [i] ;
                     int i_entityBufferCount = movePatternData.a_entityBuffer [i].Length ;
 
+                    Unity.Mathematics.Random random = new Unity.Mathematics.Random ( 135248672 ) ;
+                    movePattern.f3_position += new float3 ( random.NextFloat ( -1.1f, 1.1f ) ,0,0 ) ;
+
                     for ( int i_bufferIndex = 0; i_bufferIndex < i_entityBufferCount; i_bufferIndex ++)
                     {
                         
                         Common.BufferElements.EntityBuffer entityBuffer = movePatternData.a_entityBuffer [i][i_bufferIndex] ;
-
+                        
                         Entity compositeEntity = entityBuffer.entity ;
                         if ( compositeEntity.Index != 0 )
                         {
-                            Position position = entityManager.GetComponentData <Position> ( compositeEntity ) ;
-                            position.Value += new float3 ( 1,2,3 ) ;
+                            Blocks.CompositeComponent compositeComponent = entityManager.GetComponentData <Blocks.CompositeComponent> ( entityBuffer.entity ) ;
+                            BlockCompositeBufferElement blockCompositeBufferElement = CompositeSystem._GetCompositeFromPatternPrefab ( compositeComponent.i_inPrefabIndex ) ;
+                        
+                            Position position = new Position () ;
+                            position.Value = blockCompositeBufferElement.f3_position + movePattern.f3_position ;
+                            commandBuffer.SetComponent ( compositeEntity, position ) ;
                         }
                     }
                     
@@ -205,6 +212,10 @@ namespace ECS.Blocks
             */
         }
         
+        /// <summary>
+        /// Returns prefab index
+        /// </summary>
+        /// <returns></returns>
         private int _AddNewPatternPrefab ()
         {
             NativeArray <BlockCompositeBufferElement> a_blockCompositeBufferElement = new NativeArray<BlockCompositeBufferElement> ( CompositeSystem.i_compositesCountPerPatternGroup, Allocator.Temp ) ;
@@ -218,13 +229,13 @@ namespace ECS.Blocks
             }
 
             // assing array to the prefab store
-            int i_prefabsCount = CompositeSystem._AddNewPatternPrefab ( a_blockCompositeBufferElement ) ;
+            int i_prefabIndex = CompositeSystem._AddNewPatternPrefab ( a_blockCompositeBufferElement ) -1 ;
 
             a_blockCompositeBufferElement.Dispose () ;
 
             // a_compositesPatternPrefabs = new NativeArray<BlockCompositeBufferElement> ( 100, Allocator.Persistent ) ;
 
-            return i_prefabsCount ;
+            return i_prefabIndex ;
         }
     }
     
