@@ -1,0 +1,185 @@
+fileFormatVersion: 2
+guid: 7efbc7aa63ca81546bd6c65e3d8cd063
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: node0_001
+    100004: node0_014
+    100006: node0_015
+    100008: node0_016
+    100010: node0_017
+    100012: node0_018
+    100014: node0_019
+    100016: node0_020
+    100018: node0_021
+    100020: node0_022
+    100022: node0_023
+    100024: node1
+    100026: node2
+    100028: Orig_2Elbow
+    100030: Orig_2Shoulder
+    100032: Orig_2Tool
+    100034: Orig_2UpperArm
+    100036: Orig_2Wrist
+    100038: Orig_2Wrist2
+    100040: Orig_Base
+    100042: Orig_Elbow
+    100044: Orig_EUpperArm
+    100046: Orig_Shoulder
+    100048: Orig_Tool
+    100050: Orig_Tool2Out
+    100052: Orig_Wrist
+    100054: Orig_Wrist2
+    400000: //RootNode
+    400002: node0_001
+    400004: node0_014
+    400006: node0_015
+    400008: node0_016
+    400010: node0_017
+    400012: node0_018
+    400014: node0_019
+    400016: node0_020
+    400018: node0_021
+    400020: node0_022
+    400022: node0_023
+    400024: node1
+    400026: node2
+    400028: Orig_2Elbow
+    400030: Orig_2Shoulder
+    400032: Orig_2Tool
+    400034: Orig_2UpperArm
+    400036: Orig_2Wrist
+    400038: Orig_2Wrist2
+    400040: Orig_Base
+    400042: Orig_Elbow
+    400044: Orig_EUpperArm
+    400046: Orig_Shoulder
+    400048: Orig_Tool
+    400050: Orig_Tool2Out
+    400052: Orig_Wrist
+    400054: Orig_Wrist2
+    2100000: Dark
+    2100002: Orange
+    2300000: node0_001
+    2300002: node0_014
+    2300004: node0_015
+    2300006: node0_016
+    2300008: node0_017
+    2300010: node0_018
+    2300012: node0_019
+    2300014: node0_020
+    2300016: node0_021
+    2300018: node0_022
+    2300020: node0_023
+    2300022: node1
+    2300024: node2
+    3300000: node0_001
+    3300002: node0_014
+    3300004: node0_015
+    3300006: node0_016
+    3300008: node0_017
+    3300010: node0_018
+    3300012: node0_019
+    3300014: node0_020
+    3300016: node0_021
+    3300018: node0_022
+    3300020: node0_023
+    3300022: node1
+    3300024: node2
+    4300000: node0_001
+    4300002: node0_017
+    4300004: node0_015
+    4300006: node0_014
+    4300008: node0_016
+    4300010: node0_018
+    4300012: node1
+    4300014: node0_020
+    4300016: node2
+    4300018: node0_019
+    4300020: node0_021
+    4300022: node0_023
+    4300024: node0_022
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
