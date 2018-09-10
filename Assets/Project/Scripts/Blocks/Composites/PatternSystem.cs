@@ -52,7 +52,7 @@ namespace ECS.Blocks
             /// <summary>
             /// Tag requires composte pattern commponent to be set 
             /// </summary>            
-            public ComponentDataArray <Blocks.RequestPatternSetupTag> a_requestPatternSetupTag ;  
+            public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ;  
         }
         
 
@@ -106,30 +106,33 @@ namespace ECS.Blocks
                 // typeof ( Position ),
                 // typeof ( Common.Components.Lod01Tag )
                 typeof ( Common.BufferElements.EntityBuffer ),
-                typeof ( Blocks.RequestPatternSetupTag ),
+                typeof ( Blocks.Pattern.RequestPatternSetupTag ),
                 typeof ( Blocks.MovePattern )
 
             ) ;
 
             Debug.Log ( "PAttern System Disabled adding new groups" ) ;
 
+            Debug.Log ( "need reuse released entities" ) ;
+            // public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
 
+            // test temp
             // add some groups
-            for ( int i = 0; i < 7; i ++ )
+            for ( int i = 0; i < 3; i ++ )
             {
 
-                random = PatternPrefab.PatternPrefabSystem._Random () ;
+                random = Pattern.PatternPrefabSystem._Random () ;
 
                 Entity entity = entityManager.CreateEntity ( archetype ) ; // store data about composite patterns groups
                 entityManager.AddComponentData ( entity, new Blocks.PatternComponent () { 
-                    i_patternIndex = random.NextInt ( 0, PatternPrefab.PatternPrefabSystem.i_currentPrefabsCount ),
+                    i_patternIndex = random.NextInt ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ), // get random prefab pattern
                 } ) ;
 
                 
                 if ( i == 5 )
                 {
                     // temp test
-                   entityManager.AddComponent ( entity, typeof ( Blocks.PatternPrefab.RequestPatternReleaseTag ) ) ;
+                   entityManager.AddComponent ( entity, typeof ( Blocks.Pattern.RequestPatternReleaseTag ) ) ;
                 }
                 
             }

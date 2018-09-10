@@ -7,7 +7,7 @@ using Unity.Collections ;
 using Unity.Jobs ;
 using Unity.Burst ;
 
-namespace ECS.Blocks
+namespace ECS.Blocks.Pattern
 {
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
@@ -15,7 +15,7 @@ namespace ECS.Blocks
     [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
-    [UpdateAfter(typeof(MoveCompositeBarrier))]
+    [UpdateAfter(typeof(MoveCompositeBarrier))] // ensures no conflict
     public class ReleasePatternSystem : JobComponentSystem
     {     
         [Inject] private ReleasePatternData releasePatternData ;  
@@ -33,10 +33,10 @@ namespace ECS.Blocks
             public BufferArray <Common.BufferElements.EntityBuffer> a_compositeEntities ;
 
             // release composites from the group and the grup itself
-            public ComponentDataArray <Blocks.PatternPrefab.RequestPatternReleaseTag> a_releasePattern ;
+            public ComponentDataArray <Blocks.Pattern.RequestPatternReleaseTag> a_releasePattern ;
 
             // Excludes entities that contain a MeshCollider from the group
-            public SubtractiveComponent <Blocks.RequestPatternSetupTag> a_notSetupTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
 
             /// <summary>
             /// Tag requires composte pattern commponent to be set 
@@ -94,50 +94,21 @@ namespace ECS.Blocks
                       // Blocks.MovePatternComonent
             public void Execute ()  // for IJob
             // public void Execute ( int i )  // for IJobParallelFor
-            {                    
-                      
+            {       
+
                 for ( int i = 0; i < releasePatternData.Length; i++ )
                 {
 
                     releasePatternData.a_compositeEntities = _ReleaseCompositesFromPatternGroup ( commandBuffer, releasePatternData.a_compositeEntities, i ) ;
                     
                     // released, remove tag
-                    commandBuffer.RemoveComponent <Blocks.PatternPrefab.RequestPatternReleaseTag> ( releasePatternData.a_entities [i] ) ;
+                    commandBuffer.RemoveComponent <Blocks.Pattern.RequestPatternReleaseTag> ( releasePatternData.a_entities [i] ) ;
                     
+                    // pattern now is not assigned
+                    // can be reused later
                     commandBuffer.AddComponent ( releasePatternData.a_entities [i], new Common.Components.IsNotAssignedTag () ) ;
 
-                    /*
-                    CompositePatternComponent compositePatternComponent = movePatternData.a_compositePatternComponent [i] ;
-                    int i_ComponentsPatternIndex = compositePatternComponent.i_componentsPatternIndex ; 
-
-                    MovePatternComonent movePattern = movePatternData.a_movePattern [i] ;
-                    int i_entityBufferCount = movePatternData.a_entityBuffer [i].Length ;
-                                        
-                    movePattern.f3_position += new float3 ( random.NextFloat ( -0.01f, 0.01f ) ,0,0 ) ;
-                    movePatternData.a_movePattern [i] = movePattern ; // update
-
-                    for ( int i_bufferIndex = 0; i_bufferIndex < i_entityBufferCount; i_bufferIndex ++)
-                    {
-                        
-                        Common.BufferElements.EntityBuffer entityBuffer = movePatternData.a_entityBuffer [i][i_bufferIndex] ;
-                        
-                        Entity compositeEntity = entityBuffer.entity ;
-                        if ( compositeEntity.Index != 0 )
-                        {
-                            Blocks.CompositeComponent compositeComponent = entityManager.GetComponentData <Blocks.CompositeComponent> ( entityBuffer.entity ) ;
-                            BlockCompositeBufferElement blockCompositeBufferElement = CompositeSystem._GetCompositeFromPatternPrefab ( compositeComponent.i_inPrefabIndex ) ;
-                        
-                            Position position = new Position () ;
-                            position.Value = blockCompositeBufferElement.f3_position + movePattern.f3_position ;
-                            commandBuffer.SetComponent ( compositeEntity, position ) ;
-                        }
-                    }
-                    
-                    Debug.Log ( "Empty Exe" ) ; 
-                    */
                 }
-                
-                
             }                       
         }
 

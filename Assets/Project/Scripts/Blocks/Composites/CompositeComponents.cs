@@ -34,10 +34,9 @@ namespace ECS.Blocks
         public float3 f3_position ;
     }
 
-    public struct RequestPatternSetupTag : IComponentData { }
+    // public struct RequestPatternSetupTag : IComponentData { }
     
-
-    public struct AssignCompositePattern2EntityTag : IComponentData { }
+    // public struct AssignCompositePattern2EntityTag : IComponentData { }
     
     
 

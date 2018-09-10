@@ -328,7 +328,7 @@
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/PatternPrefabComponents.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/PatternPrefabsSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/PatternSystem.cs
--i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/ReleaseCompositePatternSystem.cs
+-i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/ReleasePatternSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/RemoveBlockSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Bootstrap/Bootstrap.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Cam.cs

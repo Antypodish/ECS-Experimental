@@ -12,13 +12,13 @@ namespace ECS.Blocks
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
     
-        public class MoveCompositeBarrier : BarrierSystem {}
+    public class MoveCompositeBarrier : BarrierSystem {}
 
     [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
     // [UpdateAfter(typeof(ReleaseCompositeBarrier))]
-    public class MoveCompositePatternSystem : JobComponentSystem
+    public class MovePatternCompositesSystem : JobComponentSystem
     {     
        
         [Inject] private MovePatternData movePatternData ;  
@@ -36,7 +36,7 @@ namespace ECS.Blocks
             public BufferArray <Common.BufferElements.EntityBuffer> a_compositeEntities ;
 
             // Excludes entities that contain a MeshCollider from the group
-            public SubtractiveComponent <Blocks.RequestPatternSetupTag> a_notSetupTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
             public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
 
             /// <summary>
@@ -77,7 +77,7 @@ namespace ECS.Blocks
         /// </summary>
         // [BurstCompile]
         // struct CompositeJob : IJobParallelFor
-        struct MovePatternDataJob : IJob
+        struct MovePatternCompositesDataJob : IJob
         {
             public EntityCommandBuffer commandBuffer ; // concurrent is required for parallel job
             // public EntityManager entityManager ;
@@ -96,9 +96,9 @@ namespace ECS.Blocks
             // public void Execute ( int i )  // for IJobParallelFor
             {             
                 
+                // iterate through patterns group, to move its composites
                 for ( int i = 0; i < movePatternData.Length; i++ )
-                {
-                    
+                {                    
 
                     PatternComponent compositePatternComponent = movePatternData.a_compositePatternComponent [i] ;
                     int i_ComponentsPatternIndex = compositePatternComponent.i_patternIndex ; 
@@ -109,6 +109,7 @@ namespace ECS.Blocks
                     movePattern.f3_position += new float3 ( random.NextFloat ( -0.01f, 0.01f ) ,0,0 ) ;
                     movePatternData.a_movePatterns [i] = movePattern ; // update
 
+                    // iterate through pattern's group composites
                     for ( int i_bufferIndex = 0; i_bufferIndex < i_entityBufferCount; i_bufferIndex ++)
                     {
                         
@@ -118,11 +119,11 @@ namespace ECS.Blocks
 
                         if ( compositeEntity.Index != 0 )
                         {   
-
-                            Blocks.CompositeComponent compositeComponent = a_compositeComponents [compositeEntity] ;
-                            //Blocks.CompositeComponent compositeComponent = entityManager.GetComponentData <Blocks.CompositeComponent> ( compositeEntity ) ;
-                            Blocks.PatternPrefab.CompositeInPatternPrefabComponent blockCompositeBufferElement = PatternPrefab.PatternPrefabSystem._GetCompositeFromPatternPrefab ( compositeComponent.i_inPrefabIndex ) ;
+                            // get composite data
+                            Blocks.CompositeComponent compositeComponent = a_compositeComponents [compositeEntity] ;                            
+                            Blocks.Pattern.CompositeInPatternPrefabComponent blockCompositeBufferElement = Pattern.PatternPrefabSystem._GetCompositeFromPatternPrefab ( compositeComponent.i_inPrefabIndex ) ;
                         
+                            // move composite
                             Position position = new Position () ;
                             position.Value = blockCompositeBufferElement.f3_position + movePattern.f3_position ;
                             commandBuffer.SetComponent ( compositeEntity, position ) ;
@@ -150,7 +151,7 @@ namespace ECS.Blocks
             JobHandle mergeJobHandle = assignCompositePatternJobHandle.Schedule ( assignCompositePatternData.Length, 64, inputDeps ) ;
             */
             
-            var movePatternDataJobHandle = new MovePatternDataJob // for IJobParallelFor
+            var movePatternDataJobHandle = new MovePatternCompositesDataJob // for IJobParallelFor
             {    
                 // options = GetBufferArrayFromEntity <Common.BufferElements.IntBuffer> (false), // not ReadOnly
                 a_compositeComponents = a_compositeComponents,
@@ -158,7 +159,7 @@ namespace ECS.Blocks
                 // entityManager = World.Active.GetOrCreateManager <EntityManager>(), // unable to use following
                 commandBuffer = compositeBarrier.CreateCommandBuffer (),
                 movePatternData = movePatternData,
-                random = PatternPrefab.PatternPrefabSystem._Random ()
+                random = Pattern.PatternPrefabSystem._Random ()
                 //requestPatternSetupData = requestPatternSetupData,
                 //spareCompositeData = spareCompositeData,
                 
