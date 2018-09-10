@@ -140,12 +140,15 @@ namespace ECS.Common
                 i_triggerID = 0                 
             }) ;
             */
-
             
-            
-            Debug.Log ( "comm") ;
-
             base.OnCreateManager ( capacity );
+        }
+
+        protected override void OnDestroyManager ( )
+        {
+            a_switch2NextLodDistances.Dispose () ;
+            a_switch2PreviousLodDistances.Dispose () ;
+            base.OnDestroyManager ( );
         }
 
         /// <summary>

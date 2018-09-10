@@ -47,7 +47,7 @@ namespace ECS.Blocks
 
             public EntityArray a_entities ;
 
-            public ComponentDataArray <Blocks.CompositePatternComponent> a_compositePattern ;
+            public ComponentDataArray <Blocks.PatternComponent> a_compositesInPattern ;
             public BufferArray <Common.BufferElements.EntityBuffer> a_entityBuffer ;
 
             /// <summary>
@@ -64,10 +64,9 @@ namespace ECS.Blocks
 
         static private EntityArchetype archetype ;
 
-        [ReadOnly] static public int i_compositesCountPerPatternGroup = 10 ;
-        [ReadOnly] static public int i_prefabsCount = 0 ;
+        
         // static public BufferArray <ECS.Blocks.BlockCompositeBufferElement> a_blockCompositesPatterns ;
-        static private NativeArray <ECS.Blocks.BlockCompositeBufferElement> a_compositesPatternPrefabs ; // default
+        // static private NativeArray <ECS.Blocks.BlockCompositeBufferElement> a_compositesPatternPrefabs ; // default
 
         protected override void OnCreateManager ( int capacity )
         {
@@ -83,20 +82,11 @@ namespace ECS.Blocks
                 // typeof ( Common.Components.Lod01Tag )
             ) ;
             
-            a_compositesPatternPrefabs = new NativeArray<BlockCompositeBufferElement> ( 100, Allocator.Persistent ) ;
-            //public ComponentDataArray <Blocks.CompositePatternComponent> a_compositePatternComponent ;
-            //public BufferArray <Common.BufferElements.EntityBuffer> a_entityBuffer ;
-            
-            // Entity entity = entityManager.CreateEntity ( ) ; // test
-            // ComponentDataArray <ECS.Common.Components.AddNewTag> a_entities = new ComponentDataArray<Common.Components.AddNewTag> () ; //( 10, Allocator.Persistent ) ;
-
-            
             base.OnCreateManager ( capacity );
         }
 
         protected override void OnDestroyManager ( )
-        {
-            a_compositesPatternPrefabs.Dispose () ;
+        {            
             base.OnDestroyManager ( );
         }
 
@@ -117,11 +107,6 @@ namespace ECS.Blocks
             
             public SpareCompositeData spareCompositeData ;            
             public RequestPatternSetupData requestPatternSetupData ;
-            
-            // [ReadOnly] public TargetsData targetsData ;
-
-            // public BufferDataFromEntity <Blocks.BlockCompositeBufferElement> a_compositesGroups ;
-            //public SharedComponentDataArray <Components.Half3SharedComponent> a_lodTargetPosition ;
 
             
             public void Execute ()  // for IJob
@@ -132,25 +117,41 @@ namespace ECS.Blocks
                 
                 if ( requestPatternSetupData.Length > 0 )
                 {
-                    int i_entitiesThatCanBeAssignedCount = UnityEngine.Mathf.FloorToInt ( i_spareCompositesCount / i_compositesCountPerPatternGroup ) ;
+                    int i_entitiesThatCanBeAssignedCount = UnityEngine.Mathf.FloorToInt ( i_spareCompositesCount / PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ) ;
+
+                    EntityArray a_spareCompoisteEntities = spareCompositeData.a_entities ;
 
                     // iterate through entities, which request to have pattern data, to be assigned
                     for ( int i_entityIndex = 0; i_entityIndex < i_entitiesThatCanBeAssignedCount; i_entityIndex ++ )
                     {   
-                        // got enough composites
-                        // assign now to requested entity
-                        _AssignComposites2Pattern ( commandBuffer, requestPatternSetupData, i_entityIndex, spareCompositeData.a_entities ) ;
+                        
+                        int i_spareEntitiesOffsetIndex = i_entityIndex * PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ;
+                        
+                        if ( PatternPrefab.PatternPrefabSystem.a_patternPrefabs.Length >= i_spareEntitiesOffsetIndex + PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup )
+                        {
+                            // got enough composites
+                            // assign now to requested entity
+                            _AssignComposites2Pattern ( commandBuffer, requestPatternSetupData, i_entityIndex, a_spareCompoisteEntities ) ;
+                        }
+                        else
+                        {
+                            Debug.Log ( "Pattern prefab index is out of range: " + ( i_spareEntitiesOffsetIndex + PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup)  ) ;
+                           //  Debug.Log ( "Not enough spare composites, to assign to pattern." ) ;
+
+                            break ;
+                        }
+
                     } // for
 
                 }
 
-                int i_totalRequiredCompositesCount = (requestPatternSetupData.Length) * i_compositesCountPerPatternGroup ;
+                int i_totalRequiredCompositesCount = (requestPatternSetupData.Length) * PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ;
                 int i_need2AddCompositesCount = i_totalRequiredCompositesCount - i_spareCompositesCount ;
-                int i_nextEntitiesThatCanBeAssignedCount = i_need2AddCompositesCount / i_compositesCountPerPatternGroup ;
+                int i_nextEntitiesThatCanBeAssignedCount = i_need2AddCompositesCount / PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ;
 
                 for ( int i_nextEntity2AssignIndex = 0; i_nextEntity2AssignIndex < i_nextEntitiesThatCanBeAssignedCount; i_nextEntity2AssignIndex ++ )
                 {               
-                    int i_componentsPatternIndex = requestPatternSetupData.a_compositePattern [i_nextEntity2AssignIndex].i_componentsPatternIndex ;
+                    int i_componentsPatternIndex = requestPatternSetupData.a_compositesInPattern [i_nextEntity2AssignIndex].i_patternIndex ;
                     
                     // add required composites   
                     // they will be assigned in next job execution
@@ -221,11 +222,11 @@ namespace ECS.Blocks
             //CompositeComponent compositeComponent = assignComposite2PatternData.a_compositeEntityRelatives [i_entityWithPaternIndex] ;
 
             
-            Blocks.CompositePatternComponent compositePattern = requestPatternSetupData.a_compositePattern [i_entityWithPaternIndex] ;
+            Blocks.PatternComponent pattern = requestPatternSetupData.a_compositesInPattern [i_entityWithPaternIndex] ;
             BufferArray <Common.BufferElements.EntityBuffer> a_patternsStore = requestPatternSetupData.a_entityBuffer ;
             
-            int i_componentsPatternIndex = compositePattern.i_componentsPatternIndex ;
-            int i_componentsPatternOffsetIndex = i_componentsPatternIndex * i_compositesCountPerPatternGroup ;
+            int i_patternIndex = pattern.i_patternIndex ;
+            int i_patternOffsetIndex = i_patternIndex * PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ;
 
             Entity requestPatternSetupEntity = requestPatternSetupData.a_entities [i_entityWithPaternIndex] ;
             
@@ -233,24 +234,21 @@ namespace ECS.Blocks
             // clear store for each pattern group entity
             a_patternsStore [i_entityWithPaternIndex].Clear () ;
 
-            int i_spareEntitiesOffsetIndex = i_entityWithPaternIndex * i_compositesCountPerPatternGroup ;
+            int i_spareEntitiesOffsetIndex = i_entityWithPaternIndex * PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup ;
             // int i_patterGroupOffsetIndex = i_componentsPatternIndex * i_compositesCountPerPatternGroup ;
             // assign composite entity to entity with pattern
-            for ( int i_spareEntityIndex = 0; i_spareEntityIndex < i_compositesCountPerPatternGroup; i_spareEntityIndex ++ )
+            for ( int i_spareEntityIndex = 0; i_spareEntityIndex < PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup; i_spareEntityIndex ++ )
             {
                 // get element from patern prefab to copy into group
-                //BlockCompositeBufferElement element = a_compositesPatternPrefabs [i_componentsPatternOffsetIndex + i_spareEntityIndex] ;
-                int i_compositeInPrefabIndex = i_componentsPatternOffsetIndex + i_spareEntityIndex ;
-                Blocks.BlockCompositeBufferElement patternPrefab = a_compositesPatternPrefabs [ i_compositeInPrefabIndex ] ;
-                //element.f3_position = patternPrefab.f3_position ; // assing new position
-                //element.i_prefabId = patternPrefab.i_prefabId ;
+                int i_compositeInPrefabIndex = i_patternOffsetIndex + i_spareEntityIndex ;
+                Blocks.PatternPrefab.CompositeInPatternPrefabComponent patternPrefab = PatternPrefab.PatternPrefabSystem.a_patternPrefabs [ i_compositeInPrefabIndex ] ;
 
                 Entity spareCompositeEntity = a_spareCompositeEntities [i_spareEntitiesOffsetIndex + i_spareEntityIndex] ;
                 
                 // assign relative references to composite
                 Blocks.CompositeComponent composite = new CompositeComponent ()
                 {
-                     blockEntity = compositePattern.blockEntity, // assign grand parent entity to composite
+                     blockEntity = pattern.blockEntity, // assign grand parent entity to composite
                      patternEntity = requestPatternSetupEntity, // assign parent pattern group entity to composite
                      i_inPrefabIndex = i_compositeInPrefabIndex // used prefab
                 } ;  
@@ -260,7 +258,7 @@ namespace ECS.Blocks
                 } ;
                 
                 // expand buffer array if is too small
-                a_patternsStore [a_patternsStore.Length - 1].Add ( spareEntityBuffer ) ;
+                a_patternsStore [i_entityWithPaternIndex].Add ( spareEntityBuffer ) ;
                
                 commandBuffer.SetComponent ( spareCompositeEntity, composite ) ;
 
@@ -276,22 +274,27 @@ namespace ECS.Blocks
             commandBuffer.RemoveComponent <Blocks.RequestPatternSetupTag> ( requestPatternSetupEntity ) ;
         }
 
-        
-        static public void _ReleaseCompositesFromPatternRequest ()
-        {
-
+        /// <summary>
+        /// Set as not assigned
+        /// And reset position
+        /// </summary>
+        /// <param name="commandBuffer"></param>
+        /// <param name="compositeEntityBuffer"></param>
+        static public void _ReleaseCompositesFromPatternRequest ( EntityCommandBuffer commandBuffer, Common.BufferElements.EntityBuffer compositeEntityBuffer )
+        {            
+            // set as not assigned
+            commandBuffer.AddComponent ( compositeEntityBuffer.entity, new Common.Components.IsNotAssignedTag () ) ;
+            // reset position
+            commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Position () { Value = new float3 (1,0,0) }  ) ;
         }
-               
-
-        // Add set of new composites, according to selected pattern group
-        static private void _AddNewSpareComposites ( EntityCommandBuffer commandBuffer, int i_patternGroupIndex )
+             /*
+        static public void _ReleaseCompositesFromPrefab ( int i_prefabIndex )
         {
-            float3 f3_scale = new float3 ( 1,1,1 ) * 0.1f ;
-
-            // BlockCompositeBufferElement element = a_compositesPatternPrefabs [i_patternGroupIndex] ;
-            // Add composites
-            for ( int i_index = 0; i_index < i_compositesCountPerPatternGroup; i_index ++ )           
+            int i_prefabMaxIndex = i_prefabIndex * i_compositesCountPerPatternGroup ;
+            for ( int i_index = i_prefabIndex; i_index < i_prefabMaxIndex ; i_index ++ )           
             {
+                BlockCompositeBufferElement composite = a_compositesPatternPrefabs[i_index] ;
+                
                 commandBuffer.CreateEntity ( archetype ) ;
                                 
                 Test02.AddBlockSystem._AddBlockRequestViaCustomBufferNoCreateEntity ( 
@@ -304,30 +307,34 @@ namespace ECS.Blocks
                 ) ;
                               
             } // for
+            // CompositeSystem._ReleaseCompositesFromPrefab () ;
         }
+        */
 
-        /// <summary>
-        /// Size of the array should be of multipler by i_compositesCountPerPatternGroup
-        /// </summary>
-        /// <param name="a_blockCompositeBufferElement"></param>
-        static public int _AddNewPatternPrefab ( NativeArray <BlockCompositeBufferElement> a_blockCompositeBufferElement )
+        // Add set of new composites, according to selected pattern group
+        static private void _AddNewSpareComposites ( EntityCommandBuffer commandBuffer, int i_patternGroupIndex )
         {
-            for ( int i = 0; i < a_blockCompositeBufferElement.Length; i ++ )
+            float3 f3_scale = new float3 ( 1,1,1 ) * 0.1f ;
+
+            // BlockCompositeBufferElement element = a_compositesPatternPrefabs [i_patternGroupIndex] ;
+            // Add composites
+            for ( int i_index = 0; i_index < PatternPrefab.PatternPrefabSystem.i_compositesCountPerPatternGroup; i_index ++ )           
             {
-                a_compositesPatternPrefabs [ i_prefabsCount * i_compositesCountPerPatternGroup + i ] = a_blockCompositeBufferElement [i] ;                
-            }
-                        
-            i_prefabsCount ++ ;
-             
-            return i_prefabsCount ;
+                commandBuffer.CreateEntity ( archetype ) ;
+                                
+                Test02.AddBlockSystem._AddBlockRequestViaCustomBufferNoCreateEntity ( 
+                    commandBuffer,
+                    //element.f3_position,
+                    float3.zero, // none pinitial osition
+                    f3_scale,
+                    float3.zero, new Entity (),
+                    new float4 (1,1,1,1)                            
+                ) ;
+                          
+            } // for
         }
 
-        static public BlockCompositeBufferElement _GetCompositeFromPatternPrefab ( int i_index )
-        {
-            BlockCompositeBufferElement blockCompositeBufferElement = a_compositesPatternPrefabs [ i_index ] ;
 
-            return blockCompositeBufferElement ;
-        }
 
     }
     

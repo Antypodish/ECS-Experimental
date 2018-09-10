@@ -23,30 +23,22 @@ namespace ECS.Blocks
     public struct AssignComposites2PatternTag : IComponentData { }
 
 
-    public struct CompositePatternComponent : IComponentData
+    public struct PatternComponent : IComponentData
     {
         public Entity blockEntity ;
-        public int i_componentsPatternIndex ; 
+        public int i_patternIndex ; 
     }
-
-    public struct MovePatternComonent : IComponentData 
+        
+    public struct MovePattern : IComponentData 
     {   
         public float3 f3_position ;
     }
 
     public struct RequestPatternSetupTag : IComponentData { }
+    
 
     public struct AssignCompositePattern2EntityTag : IComponentData { }
     
     
-
-    public struct BlockCompositeBufferElement : IBufferElementData
-    { 
-        // entity owned by this block composite
-        // public Entity entity ;
-        // used prefab ID
-        // public int i_prefabId ;
-        public float3 f3_position ;
-    }
 
 }

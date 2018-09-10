@@ -16,7 +16,7 @@ namespace ECS.Systems {
  
         struct Group {
             public readonly int Length;
-            public EntityArray Entities;
+            public EntityArray a_entities;
             public ComponentDataArray<MeshCullingComponent> culling;
 
             [ReadOnly] public Disabled disabled ;
@@ -48,7 +48,7 @@ namespace ECS.Systems {
         protected override JobHandle OnUpdate(JobHandle inputDeps) {
             var cullStatusUpdateJob = new CullingInjectionJob {
                 commandBuffer = Barrier.CreateCommandBuffer(),
-                entities = group.Entities,
+                entities = group.a_entities,
             };
             return cullStatusUpdateJob.Schedule();
         }
