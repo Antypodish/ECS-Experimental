@@ -10,7 +10,7 @@ using Unity.Rendering ;
 using Unity.Transforms ;
 using Unity.Mathematics ;
 
-namespace ECS.Test02
+namespace ECS
 {
     public sealed class Bootstrap
     {

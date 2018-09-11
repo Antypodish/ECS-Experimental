@@ -117,8 +117,8 @@ namespace ECS.Blocks
             // public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
 
             // test temp
-            // add some groups
-            for ( int i = 0; i < 3; i ++ )
+            // add some pattern groups from pattern prefabs
+            for ( int i = 0; i < 1; i ++ )
             {
 
                 random = Pattern.PatternPrefabSystem._Random () ;

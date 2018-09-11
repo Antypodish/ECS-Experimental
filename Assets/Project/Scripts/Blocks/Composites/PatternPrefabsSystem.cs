@@ -77,8 +77,9 @@ namespace ECS.Blocks.Pattern
 
         static private Unity.Mathematics.Random random = new Unity.Mathematics.Random () ;
         
-
-        [ReadOnly] static public int i_compositesCountPerPatternGroup = 10 ;
+        [ReadOnly] static public int i_compositesCountInRowPerPatternGroup = 5 ;
+        [ReadOnly] static public int i_compositesCountInColumnPerPatternGroup = 5 ;
+        [ReadOnly] static public int i_compositesCountPerPatternGroup = i_compositesCountInRowPerPatternGroup * i_compositesCountInColumnPerPatternGroup ;
         [ReadOnly] static public int i_currentPrefabsCount = 0 ;
         [ReadOnly] static public float f_compositeScale = 0.1f ;
         
@@ -111,7 +112,7 @@ namespace ECS.Blocks.Pattern
             
             // int i_componentsPatternPrefabIndex = 0 ;
 
-            int i_prefabs2AddCount = 4 ;
+            int i_prefabs2AddCount = 2 ;
             
             int i_initialIndex = a_requestAddComposites2PatternPrefab.Length ;
             if ( i_initialIndex == 0 )
@@ -134,11 +135,11 @@ namespace ECS.Blocks.Pattern
 
             random = _Random () ;
 
-            // add some new patter prefabs
+            // add some new pattern prefabs
             for ( int i = 0; i < i_prefabs2AddCount; i ++ )
             {
                 // int i_componentsPatternPrefabIndex = _GenerateNewPatternPrefab () ;
-                _GenerateNewPatternPrefab ( i_initialIndex ) ;
+                _GenerateNewPatternPrefab ( i ) ;
             }
 
             Entity requestAddNewPrefabEntity = entityManager.CreateEntity ( archetype ) ;
@@ -273,7 +274,7 @@ namespace ECS.Blocks.Pattern
         /// Returns prefab index
         /// </summary>
         /// <returns></returns>
-        private void _GenerateNewPatternPrefab ( int i_initialIndex )
+        private void _GenerateNewPatternPrefab ( int i_prefablIndex )
         {
             // NativeArray <Blocks.PatternPrefab.RequestAddPrefabBufferElement> a_compositesInPatternPrefab = new NativeArray <Blocks.PatternPrefab.RequestAddPrefabBufferElement> ( i_compositesCountPerPatternGroup, Allocator.Temp ) ;
             
@@ -288,51 +289,48 @@ namespace ECS.Blocks.Pattern
             Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefab = new Blocks.Pattern.CompositeInPatternPrefabComponent () ;
 
             //int i_maxCount = i_initialIndex * i_currentPrefabsCount + i_compositesCountPerPatternGroup ;
+            
+            int i_patternOffsetIndex = i_prefablIndex * i_compositesCountPerPatternGroup ;
 
-            for ( int i = 0; i < i_compositesCountPerPatternGroup; i++ )
-            //for ( int i = i_initialIndex * i_currentPrefabsCount; i < i_maxCount; i++ )
+            for ( int x = 0; x < i_compositesCountInRowPerPatternGroup; x++ )
             {
+
+                int i_xOffsetIndex = i_patternOffsetIndex + x * i_compositesCountInRowPerPatternGroup ;
+
+                for ( int y = 0; y < i_compositesCountInColumnPerPatternGroup; y++ )
+                //for ( int i = i_initialIndex * i_currentPrefabsCount; i < i_maxCount; i++ )
+                {
   
-                if ( i < i_compositesCountPerPatternGroup * 0.5f )
-                {
                     compositeInPatternPrefab.f3_position = new float3 ( 
-                        i * f_compositeScale, 
-                        0, 
+                        x * f_compositeScale, 
+                        y * f_compositeScale, 
                         0 
                     ) ;
-                }
-                else
-                {
+                    
+                    compositeInPatternPrefab.f3_scale = new float3 ( 1,1,1 ) * f_compositeScale ;
+
+                    /*
                     compositeInPatternPrefab.f3_position = new float3 ( 
-                        i * f_compositeScale - i_compositesCountPerPatternGroup * 0.5f * f_compositeScale, 
-                        1 * f_compositeScale, 
-                        0 
+                        random.NextFloat ( -0.5f, 0.5f ), 
+                        random.NextFloat ( -0.5f, 0.5f ), 
+                        random.NextFloat ( -0.5f, 0.5f ) 
                     ) ;
-                }
-
-                compositeInPatternPrefab.f3_scale = new float3 ( 1,1,1 ) * f_compositeScale ;
-
-                /*
-                compositeInPatternPrefab.f3_position = new float3 ( 
-                    random.NextFloat ( -0.5f, 0.5f ), 
-                    random.NextFloat ( -0.5f, 0.5f ), 
-                    random.NextFloat ( -0.5f, 0.5f ) 
-                ) ;
-                */
+                    */
 
                 
-                compositeInPatternPrefab.i_compositePrefabIndex = random.NextInt ( 0, 3 ) ; //  assign composite prefab index
-                // compositeInPatternPrefab.i_compositePrefabIndex = random.NextInt ( 0, 5 ) ; //  assign composite prefab index
+                    compositeInPatternPrefab.i_compositePrefabIndex = random.NextInt ( 0, 2 ) ; //  assign composite prefab index (0 is ignored)
+                    // compositeInPatternPrefab.i_compositePrefabIndex = random.NextInt ( 0, 5 ) ; //  assign composite prefab index
 
-                a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
+                    a_requestAddComposites2PatternPrefab [i_xOffsetIndex + y] = compositeInPatternPrefab ;
+
+                }
 
             }
-
             
             // When scale of any axis is 0 no mesh is generated
             // For each axis with scale greater than 1, there is offset applied, 
             // assuming pivot of mesh, is at the position of this composite.
-            _GreedyScalling ( i_initialIndex ) ;
+            _GreedyScalling ( i_prefablIndex ) ;
 
             // BufferArray <Blocks.PatternPrefab.RequestAddPrefabBufferElement> a_requestAddPrefabComposites ;
 
@@ -354,20 +352,122 @@ namespace ECS.Blocks.Pattern
         /// Rather it evaluates optimal scale of cube meshes, while reducing number of required cubes.
         /// Scalled cubes become boxes
         /// </summary>
-        static private void _GreedyScalling ( int i_initialIndex )
+        static private void _GreedyScalling ( int i_prefablIndex )
         {
+            _GreedyScallingYAxis ( i_prefablIndex ) ; // optional, but must be executed before GreedyScallingXAxis
+
+            _GreedyScallingXAxis ( i_prefablIndex ) ;
+
+        }
+
+        static private void _GreedyScallingXAxis ( int i_prefablIndex )
+        {
+            int i_lastDifferentCompositeTypeIndex = -1 ;
+            int i_lastDifferentCompositeTypeId = -1 ;
+
+            int i_initialOffsetIndex = i_prefablIndex * i_compositesCountPerPatternGroup ;
+            // int i_maxCount = i_initialOffsetIndex + i_compositesCountPerPatternGroup ;
+
+
+            // for ( int x = i_initialOffsetIndex * i_currentPrefabsCount; x < i_maxCount; x ++ )            
+            for ( int y = 0; y < i_compositesCountInColumnPerPatternGroup; y ++ )
+            {
+
+                int i_yOffsetIndex = i_initialOffsetIndex + y ; // * i_compositesCountInColumnPerPatternGroup ;
+
+                for ( int x = 0; x < i_compositesCountInRowPerPatternGroup; x ++ )
+                {
+
+                    int i_index = i_yOffsetIndex + x * i_compositesCountInRowPerPatternGroup ;
+
+                    Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefab = a_requestAddComposites2PatternPrefab [ i_index ] ;
+                    
+                     bool isYaxisChanged = false ;
+
+                    if ( i_lastDifferentCompositeTypeIndex >= 0 ) // make sure index is none negative
+                    {
+                        isYaxisChanged = math.abs ( compositeInPatternPrefab.f3_position.y - a_requestAddComposites2PatternPrefab [i_lastDifferentCompositeTypeIndex].f3_position.y ) > 0.001f ; // check for floating point error
+                    }
+
+                    if ( isYaxisChanged ||
+                        compositeInPatternPrefab.i_compositePrefabIndex < 0 ||
+                        //compositeInPatternPrefab.i_compositePrefabIndex >= 0 &&
+                        i_lastDifferentCompositeTypeId != compositeInPatternPrefab.i_compositePrefabIndex
+                        )
+                    {
+                        i_lastDifferentCompositeTypeIndex = i_index ;
+                        i_lastDifferentCompositeTypeId = compositeInPatternPrefab.i_compositePrefabIndex ;
+                    }
+                    else
+                    {
+                        Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefabMatch = a_requestAddComposites2PatternPrefab [i_lastDifferentCompositeTypeIndex] ;
+
+                        float3 f3_scaleDiffAbs = math.abs (  compositeInPatternPrefab.f3_scale - compositeInPatternPrefabMatch.f3_scale ) ;
+
+                        // bool isScaleMatch = f3_scaleDiffAbs.x < 0.001f && f3_scaleDiffAbs.y < 0.001f && f3_scaleDiffAbs.z < 0.001f ; // float prcision error check
+                        bool isScaleMatch = f3_scaleDiffAbs.y < 0.001f ; // float prcision error check, from previous axis iteration
+
+                        if ( isScaleMatch ) // is scale matching of chekced composites?
+                        {
+                            // composite type is the same as previous one
+                            // grow scale in the traversing direction
+                            compositeInPatternPrefabMatch.f3_scale += new float3 ( 1, 0, 0 ) * f_compositeScale ;
+                            compositeInPatternPrefabMatch.f3_position += new float3 ( f_compositeScale * 0.5f, 0 ,0 ) ;
+
+                            // first consecutive composite index, with mathching type
+                            a_requestAddComposites2PatternPrefab [i_lastDifferentCompositeTypeIndex] = compositeInPatternPrefabMatch ;
+
+
+                            // This composite is same type as previous composite. 
+                            // Previous composite mesh will be scaled, to overlap this composite.
+                            // hence mesh is not required.
+                            compositeInPatternPrefab.i_compositePrefabIndex = -1 ; // 
+
+                            // a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
+                        }
+                        else
+                        {
+                            // is diferent
+                            i_lastDifferentCompositeTypeIndex = i_index ;
+                            i_lastDifferentCompositeTypeId = compositeInPatternPrefab.i_compositePrefabIndex ;
+                        }
+
+                    } // for
+                
+                    a_requestAddComposites2PatternPrefab [i_index] = compositeInPatternPrefab ;
+
+
+                } // for           
+
+            } // for 
+
+        }
+
+        static private void _GreedyScallingYAxis ( int i_prefablIndex )
+        {
+                        
             // Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefab ;
 
             int i_lastDifferentCompositeTypeIndex = -1 ;
             int i_lastDifferentCompositeTypeId = -1 ;
 
-            int i_maxCount = i_initialIndex * i_currentPrefabsCount + i_compositesCountPerPatternGroup ;
+            int i_initialOffsetIndex = i_prefablIndex * i_compositesCountPerPatternGroup ;
+            int i_maxCount = i_initialOffsetIndex + i_compositesCountPerPatternGroup ;
+                        
 
-            for ( int i = i_initialIndex * i_currentPrefabsCount; i < i_maxCount; i ++ )
+            for ( int i = i_initialOffsetIndex * i_currentPrefabsCount; i < i_maxCount; i ++ )
             {
                 Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefab = a_requestAddComposites2PatternPrefab [i] ;
 
-                if ( i_lastDifferentCompositeTypeId != compositeInPatternPrefab.i_compositePrefabIndex )
+                bool isXaxisChanged = false ;
+
+                if ( i_lastDifferentCompositeTypeIndex >= 0 ) // make sure index is none negative
+                {
+                    isXaxisChanged = math.abs ( compositeInPatternPrefab.f3_position.x - a_requestAddComposites2PatternPrefab [i_lastDifferentCompositeTypeIndex].f3_position.x ) > 0.001f ; // check for floating point error
+                }
+
+                if ( isXaxisChanged ||
+                    i_lastDifferentCompositeTypeId != compositeInPatternPrefab.i_compositePrefabIndex )
                 {
                     // composite type has changed from previous one
 
@@ -382,8 +482,8 @@ namespace ECS.Blocks.Pattern
 
                     // composite type is the same as previous one
                     // grow scale in the traversing direction
-                    compositeInPatternPrefabMatch.f3_scale += new float3 ( 1, 0, 0 ) * f_compositeScale ;
-                    compositeInPatternPrefabMatch.f3_position += new float3 ( f_compositeScale * 0.5f ,0 ,0 ) ;
+                    compositeInPatternPrefabMatch.f3_scale += new float3 ( 0, 1, 0 ) * f_compositeScale ;
+                    compositeInPatternPrefabMatch.f3_position += new float3 ( 0, f_compositeScale * 0.5f ,0 ) ;
 
                     // first consecutive composite index, with mathching type
                     a_requestAddComposites2PatternPrefab [i_lastDifferentCompositeTypeIndex] = compositeInPatternPrefabMatch ;
@@ -402,7 +502,6 @@ namespace ECS.Blocks.Pattern
             } // for 
 
         }
-
         /// <summary>
         /// Size of the array should be of multipler by i_compositesCountPerPatternGroup
         /// Assigning composites to prefab

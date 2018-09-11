@@ -267,12 +267,42 @@ namespace ECS.Blocks
                
                     commandBuffer.SetComponent ( spareCompositeEntity, composite ) ;
 
+                    MeshInstanceRenderer renderer ;
+                    switch ( patternPrefab.i_compositePrefabIndex )
+                    {
+                        case 1:
+                            renderer = Bootstrap.octreeCenter02 ;
+                        break ;
+                        case 2:
+                            renderer = Bootstrap.octreeCenter03 ;
+                        break ;
+                        case 3:
+                            renderer = Bootstrap.octreeCenter04 ;
+                        break ;
+                        case 4:
+                            renderer = Bootstrap.octreeCenter05 ;
+                        break ;
+                        case 5:
+                            renderer = Bootstrap.octreeCenter06 ;
+                        break ;
+                        case 6:
+                            renderer = Bootstrap.octreeCenter07 ;
+                        break ;
+
+                        default:
+                            renderer = Bootstrap.octreeCenter01 ;
+                        break ;
+                    }
+
+                    commandBuffer.SetSharedComponent ( spareCompositeEntity, renderer ) ;
+
                     Position position = new Position () { Value = patternPrefab.f3_position } ;
                     commandBuffer.SetComponent ( spareCompositeEntity, position ) ;
 
                     Scale scale = new Scale () { Value = patternPrefab.f3_scale } ;
                     commandBuffer.SetComponent ( spareCompositeEntity, scale ) ;
 
+                    
                     // Composite entity has been assigned
                     // Now is ready for rendering, or other processing
                     commandBuffer.RemoveComponent <Common.Components.IsNotAssignedTag> ( spareCompositeEntity ) ;
