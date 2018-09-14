@@ -37,12 +37,12 @@ namespace ECS.Test02
         struct SetBlockHiglightJob : IJob
         // struct CollisionJob : IJobParallelFor // example of job parallel for
         {
-            public bool isBool;
+            //public bool isBool;
             
             [ReadOnly] public EntityArray a_entities;
-            [ReadOnly] public ComponentDataArray <BlockSetHighlightTag> a_setBlockHighlight ;
+            // [ReadOnly] public ComponentDataArray <BlockSetHighlightTag> a_setBlockHighlight ;
             
-            public EntityCommandBuffer commandsBuffer ;
+            public EntityCommandBuffer commandBuffer ;
 
             public void Execute ()
             {
@@ -55,10 +55,10 @@ namespace ECS.Test02
                     // assigne new renderrer
                     Unity.Rendering.MeshInstanceRenderer renderer = Bootstrap.highlightRenderer ;
                     // renderer.material.SetColor ( "_Color", Color.blue ) ;                        
-                    commandsBuffer.SetSharedComponent <MeshInstanceRenderer> ( entity, renderer ) ; // replace renderer with material and mesh
+                    commandBuffer.SetSharedComponent <MeshInstanceRenderer> ( entity, renderer ) ; // replace renderer with material and mesh
 
                     // commandsBuffer.AddComponent ( entity, new IsBlockHighlightedTag () ) ;
-                    commandsBuffer.RemoveComponent <BlockSetHighlightTag> ( entity ) ; 
+                    commandBuffer.RemoveComponent <BlockSetHighlightTag> ( entity ) ; 
 
                 }
                                
@@ -72,11 +72,11 @@ namespace ECS.Test02
             
             return new SetBlockHiglightJob
             {
-                isBool = true,
+                //isBool = true,
                 a_entities = data.a_entities,
-                a_setBlockHighlight = data.a_setBlockHighlight,
+                //a_setBlockHighlight = data.a_setBlockHighlight,
 
-                commandsBuffer = setBlockHiglightBarrier.CreateCommandBuffer (),
+                commandBuffer = setBlockHiglightBarrier.CreateCommandBuffer (),
 
             }.Schedule(inputDeps) ;
 

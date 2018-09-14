@@ -27,7 +27,8 @@ namespace ECS.Blocks
             public EntityArray a_entities ;
 
 
-            public ComponentDataArray <Common.Components.DisableSystemTag> a_disableTag ;
+            // public ComponentDataArray <Common.Components.DisableSystemTag> a_disableTag ;
+            [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
 
         /*

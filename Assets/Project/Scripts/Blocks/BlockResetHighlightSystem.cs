@@ -31,8 +31,6 @@ namespace ECS.Test02
         struct ResetBlockHiglightJob : IJob
         // struct CollisionJob : IJobParallelFor // example of job parallel for
         {
-            [ReadOnly] public bool isBool;
-            
             [ReadOnly] public EntityArray a_entities;
             [ReadOnly] public ComponentDataArray <BlockResetHighlightTag> a_setBlockHighlight ;
             
@@ -63,7 +61,6 @@ namespace ECS.Test02
 
             return new ResetBlockHiglightJob
             {
-                isBool = true,
                 a_entities = data.a_entities,
                 a_setBlockHighlight = data.a_resetBlockHighlight,
 

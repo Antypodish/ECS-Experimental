@@ -124,7 +124,7 @@ namespace ECS.Test02
             // Entity entity = blockData.a_entities [i].entity ;
             Entity entity = blockData.a_entities [i] ;
             // float4x4 f4x4 = math.mul ( float4x4.identity, new float4x4(scale.x, 0, 0, 0, 0, scale.y, 0, 0, 0, 0, scale.z, 0, 0, 0, 0, 1) ) ; // set default position/rotation/scale matrix
-            float4x4 f4x4 = new float4x4(scale.x, 0, 0, 0, 0, scale.y, 0, 0, 0, 0, scale.z, 0, position.x, position.y, position.z, 1) ; // set default position/rotation/scale matrix
+            //float4x4 f4x4 = new float4x4(scale.x, 0, 0, 0, 0, scale.y, 0, 0, 0, 0, scale.z, 0, position.x, position.y, position.z, 1) ; // set default position/rotation/scale matrix
             // commandsBuffer.AddComponent ( entity, new TransformMatrix { Value = f4x4 } ) ;
             commandsBuffer.AddComponent ( entity, new Position { Value = position } ) ;
             commandsBuffer.AddComponent ( entity, new Rotation { Value = new quaternion () } ) ;
@@ -450,17 +450,18 @@ namespace ECS.Test02
         /// Requires precreated entity with command buffer.
         /// Call it from whatever place
         /// </summary>
-        static public EntityCommandBuffer _AddBlockRequestViaCustomBufferNoCreateEntity ( EntityCommandBuffer commandsBuffer, float3 f3_position, float3 f3_scale, float3 f3_directionAxisOfCreation, Entity entitySrc, float4 f4_color )
+        static public EntityCommandBuffer _AddBlockRequestViaCustomBufferNoNewEntity ( EntityCommandBuffer commandsBuffer, float3 f3_position, float3 f3_scale, float3 f3_directionAxisOfCreation, Entity entitySrc, float4 f4_color )
         {
             //Debug.Log ( "Requested add new Block from entity # " + entitySrc.Index + "; at postion " + f3_position ) ;
          
+            
             commandsBuffer.AddComponent ( new AddBlockComponent { 
                 referenceNeighbourBlock = entitySrc, 
                 f3_position = f3_position, f3_scale = f3_scale, 
                 f_directionFromReferenceNeighbourBlock = f3_directionAxisOfCreation, 
                 f4_color = f4_color 
             } ) ; // tag it as new block. This tag will be removed after block added            
-
+            
             return commandsBuffer ;
         }
 

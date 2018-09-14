@@ -48,12 +48,12 @@ namespace ECS.Blocks
         
         [Inject] private ComponentDataFromEntity <Blocks.CompositeComponent> a_compositeComponents ;
         [Inject] private MoveCompositeBarrier compositeBarrier ;
+        static private float3 f3_moveAbout ;
                 
         protected override void OnCreateManager ( int capacity )
         {
             // commandBuffer = compositeBarrier.CreateCommandBuffer () ; // new EntityCommandBuffer () ;
-            // entityManager = World.Active.GetOrCreateManager <EntityManager>() ;
-            
+            // entityManager = World.Active.GetOrCreateManager <EntityManager>() ;            
                         
             base.OnCreateManager ( capacity );
         }
@@ -90,12 +90,15 @@ namespace ECS.Blocks
             public Unity.Mathematics.Random random ;
 
             public ComponentDataFromEntity <Blocks.CompositeComponent> a_compositeComponents ;
+            // public float3 f3_moveAbout ;
 
                       // Blocks.MovePatternComonent
             public void Execute ()  // for IJob
             // public void Execute ( int i )  // for IJobParallelFor
             {             
                 
+                f3_moveAbout += new float3 ( random.NextFloat ( -0.01f, 0.01f ) ,0,0 ) ;
+
                 // iterate through patterns group, to move its composites
                 for ( int i = 0; i < movePatternData.Length; i++ )
                 {                    
@@ -106,7 +109,7 @@ namespace ECS.Blocks
                     MovePattern movePattern = movePatternData.a_movePatterns [i] ;
                     int i_entityBufferCount = movePatternData.a_compositeEntities [i].Length ;
                                         
-                    movePattern.f3_position += new float3 ( random.NextFloat ( -0.01f, 0.01f ) ,0,0 ) ;
+                    movePattern.f3_position = f3_moveAbout + new float3 (1,0,0) * i ; //  * 0.01f;
                     movePatternData.a_movePatterns [i] = movePattern ; // update
 
                     // iterate through pattern's group composites
@@ -159,7 +162,8 @@ namespace ECS.Blocks
                 // entityManager = World.Active.GetOrCreateManager <EntityManager>(), // unable to use following
                 commandBuffer = compositeBarrier.CreateCommandBuffer (),
                 movePatternData = movePatternData,
-                random = Pattern.PatternPrefabSystem._Random ()
+                random = Pattern.PatternPrefabSystem._Random ( 1 ),
+                // f3_moveAbout = f3_moveAbout,
                 //requestPatternSetupData = requestPatternSetupData,
                 //spareCompositeData = spareCompositeData,
                 

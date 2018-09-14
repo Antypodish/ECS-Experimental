@@ -158,7 +158,7 @@ namespace ECS.Blocks.Pattern
 
                 // Set as not assigned
                 // And reset position
-                CompositeSystem._ReleaseCompositesFromPatternRequest ( commandBuffer, compositeEntityBuffer ) ;
+                _ReleaseCompositesFromPatternRequest ( commandBuffer, compositeEntityBuffer ) ;
                 // set as not assigned
                 //commandBuffer.AddComponent ( compositeEntityBuffer.entity, new Common.Components.IsNotAssignedTag () ) ;
                 // reset position
@@ -179,6 +179,19 @@ namespace ECS.Blocks.Pattern
             return a_compositeEntities ;
         }
         
+         /// <summary>
+        /// Set as not assigned
+        /// And reset position
+        /// </summary>
+        /// <param name="commandBuffer"></param>
+        /// <param name="compositeEntityBuffer"></param>
+        static public void _ReleaseCompositesFromPatternRequest ( EntityCommandBuffer commandBuffer, Common.BufferElements.EntityBuffer compositeEntityBuffer )
+        {            
+            // set as not assigned
+            commandBuffer.AddComponent ( compositeEntityBuffer.entity, new Common.Components.IsNotAssignedTag () ) ;
+            // reset position
+            commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Position () { Value = new float3 (1,0,0) }  ) ;
+        }
     }
 
     

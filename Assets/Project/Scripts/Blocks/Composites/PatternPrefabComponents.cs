@@ -38,6 +38,7 @@ namespace ECS.Blocks.Pattern
         public float3 f3_position ;
     }
     */
+    public struct InitializePrefabTag : IComponentData { } ;
 
     public struct RequestAddPrefabTag : IComponentData { } ;
 
