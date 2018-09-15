@@ -323,13 +323,16 @@
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/BlockSetHighlightSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/_CompositeSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/_CompositeSystem2.cs
+-i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/AddPatternPrefabsSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/CompositeComponents.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/CompositeSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/EnableCompositeSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/InitializePatternSystem.cs
+-i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/LodPatternComponents.cs
+-i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/LodPatternSwitchSystem.cs
+-i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/LodPatternSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/MoveCompositePatternSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/PatternPrefabComponents.cs
--i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/PatternPrefabsSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/Composites/ReleasePatternSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Blocks/RemoveBlockSystem.cs
 -i:C:/Users/Robo/Documents/Unity3D/ECS/Octree/Octree/Assets/Project/Scripts/Bootstrap/Bootstrap.cs

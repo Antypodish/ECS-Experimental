@@ -1,4 +1,6 @@
-﻿using UnityEngine ;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine ;
 using Unity.Entities ;
 using Unity.Rendering ;
 using Unity.Transforms ;
@@ -7,16 +9,18 @@ using Unity.Collections ;
 using Unity.Jobs ;
 using Unity.Burst ;
 
-namespace ECS.Common
+namespace ECS.Blocks.Pattern
 {
-    // public class BarrierA : BarrierSystem {}
-
-    // [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
+    // Creates prefab composites groups, to be utilised later by blocks
+    // Each composite group holds number of components, creating pattern.
+    
+    //[UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
-    // [UpdateAfter(typeof(BarrierB))]
-    public class LODSystem : JobComponentSystem
-    {        
+    // [UpdateAfter(typeof(ReleaseCompositeBarrier))]
+    public class LodPatternSystem : JobComponentSystem
+    {     
+
         // Targets from which distance of LOD is calcualted
         [Inject] private TargetsData targetsData ;  
                 
@@ -28,9 +32,9 @@ namespace ECS.Common
                       
             // public ComponentDataArray <ECS.Common.Components.LodComponent> a_lod ;     
             // The position, from where LOD is calculated, based on distance. Is accessesd by ID of an array
-            [ReadOnly] public ComponentDataArray <ECS.Common.Components.Float3Component> a_targetPosition ;
-            [ReadOnly] public ComponentDataArray <ECS.Common.Components.LodTargetTag> a_lodTargetTag ;
-            [ReadOnly] public ComponentDataArray <ECS.Common.Components.IsLodActiveTag> a_isLodActive ;
+            [ReadOnly] public ComponentDataArray <Common.Components.Float3Component> a_targetPosition ;
+            [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.LodTargetTag> a_lodTargetTag ;
+            [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.IsLodActiveTag> a_isLodActive ;
         }
 
         [Inject] private Lod01Data lod01Data ;     
@@ -41,12 +45,15 @@ namespace ECS.Common
 
             public EntityArray a_entities ;
 
-            // [ReadOnly] public ComponentDataArray <Position> a_position ;            
-            public ComponentDataArray <Position> a_position ; // temporarly withouth [ReadOnly]         
-            public ComponentDataArray <ECS.Common.Components.Lod01Tag> a_lodTag ;
-            [ReadOnly] public ComponentDataArray <ECS.Common.Components.IsLodActiveTag> a_isLodActive ;
+            public ComponentDataArray <Blocks.MovePattern> a_movePatterns ;
 
-            public SubtractiveComponent <ECS.Common.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
+            // [ReadOnly] public ComponentDataArray <Position> a_position ;            
+            //public ComponentDataArray <Position> a_position ; // temporarly withouth [ReadOnly]     
+            [ReadOnly] public ComponentDataArray <Blocks.PatternComponent> a_compositesInPattern ;
+            public ComponentDataArray <Blocks.Pattern.Components.Lod010Tag> a_lodTag ;
+            [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.IsLodActiveTag> a_isLodActive ;
+
+            public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
             
 
             // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
@@ -60,12 +67,15 @@ namespace ECS.Common
 
             public EntityArray a_entities ;
 
-            // [ReadOnly] public ComponentDataArray <Position> a_position ;            
-            public ComponentDataArray <Position> a_position ; // temporarly withouth [ReadOnly]                          
-            public ComponentDataArray <ECS.Common.Components.Lod02Tag> a_lodTag ;
-            [ReadOnly] public ComponentDataArray <ECS.Common.Components.IsLodActiveTag> a_isLodActive ;
+            public ComponentDataArray <Blocks.MovePattern> a_movePatterns ;
 
-            public SubtractiveComponent <ECS.Common.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
+            // [ReadOnly] public ComponentDataArray <Position> a_position ;            
+            //public ComponentDataArray <Position> a_position ; // temporarly withouth [ReadOnly]       
+            [ReadOnly] public ComponentDataArray <Blocks.PatternComponent> a_compositesInPattern ;
+            public ComponentDataArray <Blocks.Pattern.Components.Lod020Tag> a_lodTag ;
+            [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.IsLodActiveTag> a_isLodActive ;
+
+            public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
 
             // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
@@ -74,9 +84,13 @@ namespace ECS.Common
         [Inject] private Barrier lodBarrier ;
 
         static private EntityArchetype archetype ;
+
         // distances for each index per LOD
         static public NativeArray <float> a_switch2NextLodDistances ;
         static public NativeArray <float> a_switch2PreviousLodDistances ;
+
+
+
 
         protected override void OnCreateManager ( int capacity )
         {
@@ -85,11 +99,13 @@ namespace ECS.Common
             a_switch2NextLodDistances = new NativeArray<float> ( 10, Allocator.Persistent ) ;
             a_switch2PreviousLodDistances = new NativeArray<float> ( 10, Allocator.Persistent ) ;
 
-            a_switch2NextLodDistances [0] = 1 ; // distance, at which next LOD is triggerend
-            a_switch2NextLodDistances [1] = 2 ;
+             // distance, at which next LOD is triggerend
+            a_switch2NextLodDistances [0] = 3 ;
+            a_switch2NextLodDistances [1] = 7 ; // not utilised atm. No more LOD (TODO)
 
-            a_switch2PreviousLodDistances [0] = 1.5f ; // distance, at which previous LOD is triggerend
-            a_switch2PreviousLodDistances [1] = 0.5f ;
+            // distance, at which previous LOD is triggerend
+            a_switch2PreviousLodDistances [0] = 0.5f ; // not utilised
+            a_switch2PreviousLodDistances [1] = 2.5f ;
 
             // EntityCommandBuffer commandBuffer = lodBarrier.CreateCommandBuffer () ; // new EntityCommandBuffer () ;
             // EntityManager entityManager = World.Active.GetOrCreateManager <EntityManager>() ;
@@ -98,56 +114,42 @@ namespace ECS.Common
                 
                 // typeof (ComponentDataArray <Position>),            
                 // typeof (Position),            
-                typeof ( ECS.Common.Components.Float3Component ),
+                typeof ( Common.Components.Float3Component ),
                 //typeof (Common.Components.LodComponent),
                 //typeof (SharedComponentDataArray <Common.Components.Half3SharedComponent>)
                 // typeof (Common.SharedComponents.Half3SharedComponent),
-                typeof ( Common.Components.LodTargetTag ), 
-                typeof ( Common.Components.IsLodActiveTag ) 
+                typeof ( Blocks.Pattern.Components.LodTargetTag ), 
+                typeof ( Blocks.Pattern.Components.IsLodActiveTag ) 
             ) ;
 
-            /*
+
+
+            // temp
+            
             // create test target (soruce from which LOD is calculating a distance)
-            Entity entity = entityManager.CreateEntity ( archetype ) ;
+            Entity entity = EntityManager.CreateEntity ( archetype ) ;
 
+            EntityManager.SetComponentData ( entity, new Common.Components.Float3Component { f3 = new float3 ( 3f, 0, 0f ) } ) ;
+            /*
             // create test entities to apply LOD
-            entity = entityManager.CreateEntity ( 
+            entity = EntityManager.CreateEntity ( 
                 typeof ( Position ),
-                typeof ( Common.Components.Lod02Tag ), 
-                typeof ( Common.Components.IsLodActiveTag )  
+                typeof ( Blocks.Pattern.Components.Lod010Tag ), 
+                typeof ( Blocks.Pattern.Components.IsLodActiveTag )  
             ) ;
-
-            entityManager.SetComponentData ( entity, new Position { Value = new float3 ( 3f, 0, 0 ) } ) ;
-            entityManager.AddComponent ( entity, typeof ( Common.Components.EntityComponent ) ) ;
-
-            Common.Components.EntityComponent EntityStruct = new Common.Components.EntityComponent { entity = new Entity() } ;
-            entityManager.SetComponentData ( entity, EntityStruct ) ;
             */
 
-            /*
-            entity = entityManager.CreateEntity (                 
-                typeof ( Position ),
-                typeof ( Common.Components.Lod02Tag ),
-                typeof ( Common.Components.IsLodActiveTag )                 
-            ) ;
+            //EntityManager.SetComponentData ( entity, new Position { Value = new float3 ( 0f, 0, 3 ) } ) ;
+            //EntityManager.AddComponent ( entity, typeof ( Common.Components.EntityComponent ) ) ;
+
+            //Common.Components.EntityComponent EntityStruct = new Common.Components.EntityComponent { entity = new Entity() } ;
+            //EntityManager.SetComponentData ( entity, EntityStruct ) ;
             
 
-            entity = entityManager.CreateEntity ( archetype ) ;
-            entityManager.AddComponentData ( entity, new ECS.Common.Components.Lod01Tag { } ) ;
-            // ComponentDataArray<Components.IntComponent> a_meshID = new ComponentDataArray<Components.IntComponent> () ; // ( 50, Allocator.Persistent) ;
-            */
-            /*
-            entityManager.SetComponentData ( entity, new Common.Components.LodComponent {  
-                i4_meshID                       = new int4 ( 0, 1, 2, 3 ),
-                f4_switch2NextLodDistance       = new float4 ( 1, 2, 0, 0 ), // distance, at which next LOD is triggerend
-                f4_switch2PreviousLodDistance   = new float4 ( 1.5f, 0.5f, 0, 0 ), // distance, at which previous LOD is triggerend
-                
-                i_triggerID = 0                 
-            }) ;
-            */
-            
+
             base.OnCreateManager ( capacity );
         }
+
 
         protected override void OnDestroyManager ( )
         {
@@ -157,33 +159,38 @@ namespace ECS.Common
         }
 
 
+
+
+
         
         protected override JobHandle OnUpdate ( JobHandle inputDeps )
         {
 
             /// var copyObstaclePositionsJobHandle = copyObstaclePositionsJob.Schedule(obstaclePositions.Length, 2, inputDeps);
             
-            var lod01Job = new Lod01Job // for IJobParallelFor
+            float3 f3_targetPosition = targetsData.a_targetPosition [0].f3 ;
+
+            var lod010Job = new Lod010Job // for IJobParallelFor
             {                
                 commandsBuffer = lodBarrier.CreateCommandBuffer (),
                 data = lod01Data,
                 //targetsData = targetsData,
-                targetsData = targetsData
+                f3_targetPosition = f3_targetPosition
                 //a_lodTargetPosition = a_lodTargetPosition
             } ;// .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
 
-            var mergeLod01JobHandle = lod01Job.Schedule( lod01Data.Length, 64, inputDeps ) ;
+            var mergeLod01JobHandle = lod010Job.Schedule( lod01Data.Length, 64, inputDeps ) ;
 
             // return new MoveInstanceJob // for IJob
-            var lod02Job = new Lod02Job // for IJobParallelFor
+            var lod020Job = new Lod020Job // for IJobParallelFor
             {
                 commandsBuffer = lodBarrier.CreateCommandBuffer (),
                 data = lod02Data,
-                targetsData = targetsData
+                f3_targetPosition = f3_targetPosition
                 //a_lodTargetPosition = a_lodTargetPosition
             } ; // .Schedule( lod02Data.Length, 64, inputDeps) ; // IJobParallelFor
             
-            var mergeLod02JobHandle = lod02Job.Schedule( lod02Data.Length, 64, mergeLod01JobHandle ) ;
+            var mergeLod02JobHandle = lod020Job.Schedule( lod02Data.Length, 64, mergeLod01JobHandle ) ;
 
             return mergeLod02JobHandle ; // for IJobParallelFor
 
@@ -194,15 +201,15 @@ namespace ECS.Common
         /// Execute Jobs
         /// </summary>
         // [BurstCompile]
-        struct Lod01Job : IJobParallelFor
+        struct Lod010Job : IJobParallelFor
         {
             public EntityCommandBuffer.Concurrent commandsBuffer ; // concurrent is required for parallel job
             // public EntityCommandBuffer commandsBuffer ;
             // public EntityArray a_entities;
             public Lod01Data data ;          
-            [ReadOnly] public TargetsData targetsData ; 
+            // [ReadOnly] public TargetsData targetsData ;             
             //[ReadOnly] public ComponentDataArray <Position> a_targetPosition ;
-            //[ReadOnly] public float3 f3_targetPosition ;
+            [ReadOnly] public float3 f3_targetPosition ;
 
             //public SharedComponentDataArray <Components.Half3SharedComponent> a_lodTargetPosition ;
             
@@ -210,14 +217,9 @@ namespace ECS.Common
             // public void Execute ()  // for IJob
             public void Execute ( int i )  // for IJobParallelFor
             {                
-                Debug.Log ( "Switch Lod01 for entity #" + data.a_entities [i].Index ) ;
+                Debug.Log ( "Switch Lod010 for entity #" + data.a_entities [i].Index ) ;
                 
-                // Common.Components.LodComponent lodData = data.a_lod [i] ;
-
-                // int i_triggerID = lodData.i_triggerID ;
-
-                float3 f3_targetPosition = targetsData.a_targetPosition [i].f3 ; // currently considering only one entity target 
-                float3 f3_position = data.a_position [i].Value ;
+                float3 f3_position = data.a_movePatterns [i].f3_position ;
                 float3 f3_positionDiff = f3_targetPosition - f3_position ;
                 
                 float f_distance = UnityEngine.Mathf.Sqrt ( 
@@ -226,14 +228,14 @@ namespace ECS.Common
                     f3_positionDiff.z * f3_positionDiff.z 
                 ) ;
                 
-                Debug.Log ( (float)f_distance ) ;
+                Debug.Log ( "At Distance: " + (float)f_distance ) ;
                 float f_switch2NextLodDistance = a_switch2NextLodDistances [0] ;
                 float f_switch2PreviousLodDistance = a_switch2PreviousLodDistances [0] ;
 
                 // test
                 // Position pos = data.a_position [i] ;
-                f3_position += new float3 ( 0.01f, 0, 0 ) ;
-                data.a_position [i] = new Position () { Value = f3_position } ;
+                //f3_position += new float3 ( 0.01f, 0, 0 ) ;
+                //data.a_position [i] = new Position () { Value = f3_position } ;
                 // Entity entity = data.a_entities [i] ;
                 //commandsBuffer.SetComponent ( entity, pos ) ;
 
@@ -242,15 +244,17 @@ namespace ECS.Common
                 {
                     Entity jobEntity = data.a_entities [i] ;
                     // switch to next LOD
-                    commandsBuffer.RemoveComponent <Common.Components.Lod01Tag> ( jobEntity ) ;
-                    commandsBuffer.AddComponent ( jobEntity, new Components.Lod02Tag () ) ;
-                    commandsBuffer.AddComponent ( jobEntity, new Components.IsLodSwitchedTag () ) ;
+                    commandsBuffer.RemoveComponent <Blocks.Pattern.Components.Lod010Tag> ( jobEntity ) ;
+                    commandsBuffer.AddComponent ( jobEntity, new Blocks.Pattern.Components.Lod020Tag () ) ;
+                    commandsBuffer.AddComponent ( jobEntity, new Blocks.Pattern.Components.IsLodSwitchedTag () ) ;
                 }
                 else if ( f_distance <= f_switch2PreviousLodDistance )
                 {
                     // there is no lower LOD
                 }
                 
+                //}
+
             }                       
         }
 
@@ -259,28 +263,28 @@ namespace ECS.Common
         /// Execute Jobs
         /// </summary>
         // [BurstCompile]
-        struct Lod02Job : IJobParallelFor
+        struct Lod020Job : IJobParallelFor
         {
             public EntityCommandBuffer.Concurrent commandsBuffer ; // concurrent is required for parallel job
             // public EntityArray a_entities;            
             public Lod02Data data ;  
-            [ReadOnly] public TargetsData targetsData ;                
+            //[ReadOnly] public TargetsData targetsData ;                
             //[ReadOnly] public ComponentDataArray <Position> a_targetPosition ;
-            //[ReadOnly] public float3 f3_targetPosition ;
+            [ReadOnly] public float3 f3_targetPosition ;
 
             //public SharedComponentDataArray <Components.Half3SharedComponent> a_lodTargetPosition ;
 
             // public void Execute ()  // for IJob
             public void Execute ( int i )  // for IJobParallelFor
             {
-                Debug.Log ( "Switch Lod02 for entity #" + data.a_entities [i].Index ) ;
+                Debug.Log ( "Switch Lod020 for entity #" + data.a_entities [i].Index ) ;
                 
                 // Common.Components.LodComponent lodData = data.a_lod [i] ;
 
                 //int i_triggerID = lodData.i_triggerID ;
 
-                float3 f3_targetPosition = targetsData.a_targetPosition [i].f3 ; // currently considering only one entity target                        
-                float3 f3_position = data.a_position [i].Value ;
+                // float3 f3_targetPosition = targetsData.a_targetPosition [i].f3 ; // currently considering only one entity target                        
+                float3 f3_position = data.a_movePatterns [i].f3_position ;
                 float3 f3_positionDiff = f3_targetPosition - f3_position ;
                 
                 float f_distance = UnityEngine.Mathf.Sqrt ( 
@@ -295,10 +299,10 @@ namespace ECS.Common
                             
                 // test
                 // Position pos = data.a_position [i] ;
-                f3_position -= new float3 ( 0.01f, 0, 0 ) ;
+                //f3_position -= new float3 ( 0.01f, 0, 0 ) ;
                 // Entity entity = data.a_entities [i] ;
                 //commandsBuffer.SetComponent ( entity, pos ) ;
-                data.a_position [i] = new Position () { Value = f3_position } ;
+                //data.a_position [i] = new Position () { Value = f3_position } ;
 
                 if ( f_distance >= f_switch2NextLodDistance )
                 {
@@ -311,9 +315,9 @@ namespace ECS.Common
                 {
                     Entity jobEntity = data.a_entities [i] ;
                     // Switch to lower LOD
-                    commandsBuffer.RemoveComponent <Common.Components.Lod02Tag> ( jobEntity ) ;
-                    commandsBuffer.AddComponent <Common.Components.Lod01Tag> ( jobEntity, new Components.Lod01Tag () ) ;
-                    commandsBuffer.AddComponent ( jobEntity, new Components.IsLodSwitchedTag () ) ;
+                    commandsBuffer.RemoveComponent <Blocks.Pattern.Components.Lod020Tag> ( jobEntity ) ;
+                    commandsBuffer.AddComponent <Blocks.Pattern.Components.Lod010Tag> ( jobEntity, new Blocks.Pattern.Components.Lod010Tag () ) ;
+                    commandsBuffer.AddComponent ( jobEntity, new Blocks.Pattern.Components.IsLodSwitchedTag () ) ;
                 }
                 
             }                       
@@ -334,6 +338,7 @@ namespace ECS.Common
 
 
     }
+
     
 }
 

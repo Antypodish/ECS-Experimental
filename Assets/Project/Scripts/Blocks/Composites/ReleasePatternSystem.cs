@@ -12,7 +12,7 @@ namespace ECS.Blocks.Pattern
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
     
-    [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
+    //[UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
     [UpdateAfter(typeof(MoveCompositeBarrier))] // ensures no conflict
@@ -36,7 +36,7 @@ namespace ECS.Blocks.Pattern
             public ComponentDataArray <Blocks.Pattern.RequestPatternReleaseTag> a_releasePattern ;
 
             // Excludes entities that contain a MeshCollider from the group
-            public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
+            // public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
 
             /// <summary>
             /// Tag requires composte pattern commponent to be set 
@@ -72,6 +72,41 @@ namespace ECS.Blocks.Pattern
         {
             // a_compositesPatternPrefabs.Dispose () ;
             base.OnDestroyManager ( );
+        }
+
+        
+        
+        protected override JobHandle OnUpdate ( JobHandle inputDeps )
+        {            
+            /*
+            var movePatternDataJobHandle = new MovePatternDataJob // for IJobParallelFor
+            {    
+                commandBuffer = compositeBarrier.CreateCommandBuffer (),
+                movePatternData = movePatternData,
+                random = random
+                //requestPatternSetupData = requestPatternSetupData,
+                //spareCompositeData = spareCompositeData,
+                
+                
+            } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
+            */
+            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( movePatternData.Length, 64, inputDeps ) ;
+            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( inputDeps ) ;
+
+            var releasePatternDataJobHandle = new ReleasePatternDataJob // for IJobParallelFor
+            {    
+                commandBuffer = compositeBarrier.CreateCommandBuffer (),
+                releasePatternData = releasePatternData,
+                //requestPatternSetupData = requestPatternSetupData,
+                //spareCompositeData = spareCompositeData,
+                
+                
+            } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
+
+            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( movePatternData.Length, 64, inputDeps ) ;
+            JobHandle mergeJobHandle = releasePatternDataJobHandle.Schedule ( inputDeps ) ;
+
+            return mergeJobHandle ;
         }
         
         /// <summary>
@@ -112,39 +147,6 @@ namespace ECS.Blocks.Pattern
             }                       
         }
 
-        
-        protected override JobHandle OnUpdate ( JobHandle inputDeps )
-        {            
-            /*
-            var movePatternDataJobHandle = new MovePatternDataJob // for IJobParallelFor
-            {    
-                commandBuffer = compositeBarrier.CreateCommandBuffer (),
-                movePatternData = movePatternData,
-                random = random
-                //requestPatternSetupData = requestPatternSetupData,
-                //spareCompositeData = spareCompositeData,
-                
-                
-            } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
-            */
-            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( movePatternData.Length, 64, inputDeps ) ;
-            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( inputDeps ) ;
-
-            var releasePatternDataJobHandle = new ReleasePatternDataJob // for IJobParallelFor
-            {    
-                commandBuffer = compositeBarrier.CreateCommandBuffer (),
-                releasePatternData = releasePatternData,
-                //requestPatternSetupData = requestPatternSetupData,
-                //spareCompositeData = spareCompositeData,
-                
-                
-            } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
-
-            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( movePatternData.Length, 64, inputDeps ) ;
-            JobHandle mergeJobHandle = releasePatternDataJobHandle.Schedule ( inputDeps ) ;
-
-            return mergeJobHandle ;
-        }
         
         static private BufferArray <Common.BufferElements.EntityBuffer> _ReleaseCompositesFromPatternGroup ( EntityCommandBuffer commandBuffer, BufferArray <Common.BufferElements.EntityBuffer> a_compositeEntities, int i_prefabIndex )
         {
@@ -190,7 +192,9 @@ namespace ECS.Blocks.Pattern
             // set as not assigned
             commandBuffer.AddComponent ( compositeEntityBuffer.entity, new Common.Components.IsNotAssignedTag () ) ;
             // reset position
-            commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Position () { Value = new float3 (1,0,0) }  ) ;
+            commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Position () { Value = new float3 (0,5,5) }  ) ;
+
+            commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Scale () { Value = new float3 (1,1,1) * 0.1f }  ) ;
         }
     }
 

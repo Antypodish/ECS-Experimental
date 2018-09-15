@@ -30,6 +30,7 @@ namespace ECS.Blocks
             /// </summary>            
             public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ;  
             
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
             // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
         

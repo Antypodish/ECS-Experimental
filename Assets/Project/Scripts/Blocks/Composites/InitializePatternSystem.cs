@@ -7,7 +7,7 @@ using Unity.Collections ;
 using Unity.Jobs ;
 using Unity.Burst ;
 
-namespace ECS.Blocks
+namespace ECS.Blocks.Pattern
 {
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
@@ -57,7 +57,10 @@ namespace ECS.Blocks
                 //typeof ( Common.Components.IsNotAssignedTag ),
                 typeof ( Common.BufferElements.EntityBuffer ),
                 typeof ( Blocks.Pattern.RequestPatternSetupTag ),
-                typeof ( Blocks.MovePattern )
+                typeof ( Common.Components.IsNotAssignedTag ),
+                typeof ( Blocks.MovePattern ),
+                typeof ( Blocks.Pattern.Components.Lod010Tag ),
+                typeof ( Blocks.Pattern.Components.IsLodActiveTag )
                 //typeof ( Blocks.CompositeComponent )
             ) ;
 
@@ -90,7 +93,7 @@ namespace ECS.Blocks
             {
                 // prefabs must exist
                 // keep checking
-                if ( Pattern.PatternPrefabSystem.i_currentPrefabsCount > 0 )
+                if ( Pattern.AddPatternPrefabSystem.i_currentPrefabsCount > 0 )
                 {
 
                     isInitialized = true ;
@@ -102,7 +105,7 @@ namespace ECS.Blocks
                     EntityManager.DestroyEntity ( initializationEntity ) ;
 
 
-                    Debug.Log ( "rand2 (random pattern getting not working) : " + Pattern.PatternPrefabSystem.i_currentPrefabsCount ) ;
+                    // Debug.Log ( "rand2 (random pattern getting not working) : " + Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ;
 
                     // test temp
                     // add some pattern groups from pattern prefabs
@@ -117,12 +120,12 @@ namespace ECS.Blocks
                         // Debug.Log ( "rand2 (random pattern getting not working) : " + random.NextInt ( 0, i_patternGroups ) ) ;
 
                         Entity entity = EntityManager.CreateEntity ( archetype ) ; // store data about composite patterns groups
-                        int i_radomPattern = UnityEngine.Random.Range ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ) ;// get random pattern
-                        i_radomPattern = 1 ; // temp test fixed index
+                        int i_radomPattern = UnityEngine.Random.Range ( 0, Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ; // get random pattern
                         EntityManager.AddComponentData ( entity, new Blocks.PatternComponent () { 
                             //i_patternIndex = random.NextInt ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ), // get random prefab pattern
                             i_patternIndex = i_radomPattern,            
                             //i_patternIndex = random.NextInt ( 0, 3 )
+                            f_baseScale = 2f
                         } ) ;
 
                         /*

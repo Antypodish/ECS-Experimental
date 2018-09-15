@@ -101,7 +101,11 @@ namespace ECS.Common.Components
         
     }
 
+    /// <summary>
+    /// Reference to which position is entity measure distance, to switch LOD
+    /// </summary>
     public struct LodTargetTag : IComponentData { } ;
+    public struct IsLodSwitchedTag : IComponentData { } ;
 
     public struct Lod01Tag : IComponentData { } ;
     public struct Lod02Tag : IComponentData { } ;

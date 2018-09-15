@@ -15,11 +15,11 @@ namespace ECS.Blocks.Pattern
     // Each composite group holds number of components, creating pattern.
     
 
-    [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
+    // [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
     // [UpdateAfter(typeof(BarrierB))]
-    public class PatternPrefabSystem : JobComponentSystem
+    public class AddPatternPrefabSystem : JobComponentSystem
     {     
         [Inject] private RequestAddPatternPrefabData requestAddPatternPrefabData ;  
 
@@ -41,7 +41,7 @@ namespace ECS.Blocks.Pattern
         }
         
         /// <summary>
-        /// Temp storage, until request is excuted, by adding request prefabs, to actuall prefab store. After which, store is emptied.
+        /// Temp storage for duration of request, until is excuted, by adding request prefabs, to actuall prefab store. After which, store is emptied.
         /// </summary>
         static private NativeArray <Blocks.Pattern.CompositeInPatternPrefabComponent> a_requestAddComposites2PatternPrefab = new NativeArray<CompositeInPatternPrefabComponent> ( 0, Allocator.Persistent ) ;
 
@@ -134,6 +134,29 @@ namespace ECS.Blocks.Pattern
             base.OnDestroyManager ( );
         }
 
+
+        
+        protected override JobHandle OnUpdate ( JobHandle inputDeps )
+        {
+
+            var addPatternPrefabJobHandle = new AddPatternPrefabJob
+            {    
+                commandBuffer = compositeBarrier.CreateCommandBuffer (),
+                requestAddPatternPrefabData = requestAddPatternPrefabData,
+                a_requestAddComposites2PatternPrefab = a_requestAddComposites2PatternPrefab,
+                
+                //spareCompositeData = spareCompositeData,                
+                
+            }.Schedule ( inputDeps ) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
+
+            // JobHandle mergeJobHandle = assignCompositePatternJobHandle.Schedule ( assignCompositePatternData.Length, 64, inputDeps ) ;
+
+            return addPatternPrefabJobHandle ;
+       
+        }
+        
+
+
         // Forum topic discussing, why using IJob, rather IJObPrallelFor for BufferArray
         // https://forum.unity.com/threads/how-can-i-improve-or-jobify-this-system-building-a-list.547324/#post-3614746
         // Prevents potential race condition, of writting into same entities, form differnet prallel jobs
@@ -197,57 +220,6 @@ namespace ECS.Blocks.Pattern
             }            
         }
 
-        protected override JobHandle OnUpdate ( JobHandle inputDeps )
-        {
-            /*
-            var compositePatternsJobHandle = new CompositePatternsJob // for IJobParallelFor
-            {    
-                commandsBuffer = compositeBarrier.CreateCommandBuffer (),
-                data = compositePatternsData,
-            } ; //.Schedule (inputDeps) ; ;// .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
-
-            // var mergeJobHandle = assignCompositePatternJobHandle.Schedule ( assignCompositePatternData.Length, 64, mergeLod01JobHandle ) ;
-            JobHandle mergeJobHandle = assignCompositePatternJobHandle.Schedule ( assignCompositePatternData.Length, 64, inputDeps ) ;
-            */
-
-            var addPatternPrefabJobHandle = new AddPatternPrefabJob // for IJobParallelFor
-            {    
-                commandBuffer = compositeBarrier.CreateCommandBuffer (),
-                requestAddPatternPrefabData = requestAddPatternPrefabData,
-                a_requestAddComposites2PatternPrefab = a_requestAddComposites2PatternPrefab,
-                
-                //spareCompositeData = spareCompositeData,
-                
-                
-            }.Schedule ( inputDeps ) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
-
-            // JobHandle mergeJobHandle = assignCompositePatternJobHandle.Schedule ( assignCompositePatternData.Length, 64, inputDeps ) ;
-
-            return addPatternPrefabJobHandle ;
-        
-            // var mergeCompositeJobHandle = compositeJob.Schedule ( compositeData.Length, 64, inputDeps ) ;
-
-            // return mergeCompositeJobHandle ; // for IJobParallelFor
-
-            /*
-            var mergeLod01JobHandle = lod01Job.Schedule( lod01Data.Length, 64, inputDeps ) ;
-
-            // return new MoveInstanceJob // for IJob
-            var lod02Job = new Lod02Job // for IJobParallelFor
-            {
-                // commandsBuffer = lodBarrier.CreateCommandBuffer (),
-                a_entities = lod02Data.a_entities,
-                data = lod02Data,
-                targetsData = targetsData,
-                //a_lodTargetPosition = a_lodTargetPosition
-            } ; // .Schedule( lod02Data.Length, 64, inputDeps) ; // IJobParallelFor
-            
-            var mergeLod02JobHandle = lod02Job.Schedule( lod02Data.Length, 64, mergeLod01JobHandle ) ;
-
-            return mergeLod02JobHandle ; // for IJobParallelFor
-            */
-        }
-        
         
         /// <summary>
         /// Returns prefab index
@@ -650,10 +622,6 @@ namespace ECS.Blocks.Pattern
                                 // Previous composite mesh will be scaled, to overlap this composite.
                                 // hence mesh is not required.
                                 compositeInPatternPrefab.i_compositePrefabIndex = -1 ; // 
-                                Debug.Log ( "Z axis: " + compositeInPatternPrefab.f3_scale + "; " + compositeInPatternPrefabMatch.f3_scale ) ;
-                                Debug.Log ( "Z axis: " + compositeInPatternPrefab.f3_position + "; " + compositeInPatternPrefabMatch.f3_position ) ;
-                                Debug.Log ( "Z axis: " + compositeInPatternPrefab.i_compositePrefabIndex + "; " + compositeInPatternPrefabMatch.i_compositePrefabIndex ) ;
-                                // a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
                             }
                             else
                             {
@@ -743,10 +711,6 @@ namespace ECS.Blocks.Pattern
                             // Previous composite mesh will be scaled, to overlap this composite.
                             // hence mesh is not required.
                             compositeInPatternPrefab.i_compositePrefabIndex = -1 ; // 
-                            Debug.Log ( "X axis: " + compositeInPatternPrefab.f3_scale + "; " + compositeInPatternPrefabMatch.f3_scale ) ;
-                                Debug.Log ( "X axis: " + compositeInPatternPrefab.f3_position + "; " + compositeInPatternPrefabMatch.f3_position ) ;
-                                Debug.Log ( "X axis: " + compositeInPatternPrefab.i_compositePrefabIndex + "; " + compositeInPatternPrefabMatch.i_compositePrefabIndex ) ;
-                            // a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
                         }
                         else
                         {
@@ -823,10 +787,7 @@ namespace ECS.Blocks.Pattern
                     // Previous composite mesh will be scaled, to overlap this composite.
                     // hence mesh is not required.
                     compositeInPatternPrefab.i_compositePrefabIndex = -1 ; // 
-                    Debug.Log ( "Y axis: " + compositeInPatternPrefab.f3_scale + "; " + compositeInPatternPrefabMatch.f3_scale ) ;
-                                Debug.Log ( "Y axis: " + compositeInPatternPrefab.f3_position + "; " + compositeInPatternPrefabMatch.f3_position ) ;
-                                Debug.Log ( "Y axis: " + compositeInPatternPrefab.i_compositePrefabIndex + "; " + compositeInPatternPrefabMatch.i_compositePrefabIndex ) ;
-                    // a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
+        
                 }
                 
                 a_requestAddComposites2PatternPrefab [i] = compositeInPatternPrefab ;
@@ -893,7 +854,7 @@ namespace ECS.Blocks.Pattern
                         a_patternPrefabs [ i_prefabOffsetIndex + i_compositesCountPerPatternGroup - i_ignoredOffsetIndex ] = tempComposite ;
                         // other properties like position and scale is ignored
 
-                    Debug.Log ( "also -1: a_patternPrefabs index: " + (i_prefabOffsetIndex + i_compositesCountPerPatternGroup - i_ignoredOffsetIndex) ) ;
+                        // Debug.Log ( "also -1: a_patternPrefabs index: " + (i_prefabOffsetIndex + i_compositesCountPerPatternGroup - i_ignoredOffsetIndex) ) ;
                     }
                 }
                         
