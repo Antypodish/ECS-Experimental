@@ -125,7 +125,9 @@ namespace ECS.Blocks.Pattern
                             //i_patternIndex = random.NextInt ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ), // get random prefab pattern
                             i_patternIndex = i_radomPattern,            
                             //i_patternIndex = random.NextInt ( 0, 3 )
-                            f_baseScale = 2f
+                            f_baseScale = 2f,
+                            f_localPosition = new float3 ( 1, 0, 0 ) * i
+
                         } ) ;
 
                         /*

@@ -41,6 +41,7 @@ namespace ECS.Blocks.Pattern
             public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
             public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
 
+            public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
             public ComponentDataArray <Blocks.Pattern.Components.Lod010Tag> a_lod01Tag ;
             // public SubtractiveComponent <Common.Components.Lod05Tag> a_lod05Tag ; // test
             /// <summary>
@@ -65,10 +66,9 @@ namespace ECS.Blocks.Pattern
             public BufferArray <Common.BufferElements.EntityBuffer> a_compositeEntities ;
 
             // Excludes entities that contain a MeshCollider from the group
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
             public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
             public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
-            // public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
-            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
 
             public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
             public ComponentDataArray <Blocks.Pattern.Components.Lod020Tag> a_lod02Tag ; // test temp
@@ -111,6 +111,9 @@ namespace ECS.Blocks.Pattern
                       
             EntityCommandBuffer commandBuffer = compositeBarrier.CreateCommandBuffer () ;
 
+            Unity.Mathematics.Random random = Pattern.AddPatternPrefabSystem._Random ( 1 ) ;
+            f3_moveAbout += new float3 ( random.NextFloat ( -0.15f, 0.15f ) ,0,0 ) ;
+
             var movePatternDataJobHandle = new MovePatternCompositesDataJob // for IJobParallelFor
             {    
                 // options = GetBufferArrayFromEntity <Common.BufferElements.IntBuffer> (false), // not ReadOnly
@@ -119,7 +122,7 @@ namespace ECS.Blocks.Pattern
                 // entityManager = World.Active.GetOrCreateManager <EntityManager>(), // unable to use following
                 commandBuffer = commandBuffer,
                 movePatternData = movePatternData,
-                random = Pattern.AddPatternPrefabSystem._Random ( 1 ),
+                // random = Pattern.AddPatternPrefabSystem._Random ( 1 ),
                 // f3_moveAbout = f3_moveAbout,
                 //requestPatternSetupData = requestPatternSetupData,
                 //spareCompositeData = spareCompositeData,
@@ -169,7 +172,7 @@ namespace ECS.Blocks.Pattern
             // public RequestPatternSetupData requestPatternSetupData ;
             public MovePatternData movePatternData ;
 
-            public Unity.Mathematics.Random random ;
+            // public Unity.Mathematics.Random random ;
 
             public ComponentDataFromEntity <Blocks.CompositeComponent> a_compositeComponents ;
             // public float3 f3_moveAbout ;
@@ -179,8 +182,6 @@ namespace ECS.Blocks.Pattern
             // public void Execute ( int i )  // for IJobParallelFor
             {             
                 
-                f3_moveAbout += new float3 ( random.NextFloat ( -0.05f, 0.05f ) ,0,0 ) ;
-
                 // Iterate through patterns groups, to move its composites
                 for ( int i = 0; i < movePatternData.Length; i++ )
                 {                    
@@ -188,12 +189,16 @@ namespace ECS.Blocks.Pattern
                     PatternComponent patternGroup = movePatternData.a_compositePatternComponent [i] ;
                     // int i_componentsPatternIndex = patternGroup.i_patternIndex ; 
 
+                    patternGroup.f_baseScale = 1f ; // test temp
+
                     MovePattern movePattern = movePatternData.a_movePatterns [i] ;
                     
                     int i_entityBufferCount = movePatternData.a_compositeEntities [i].Length ;
 
                     // position offset test
-                    movePattern.f3_position = f3_moveAbout + new float3 (1,0,0) * i * patternGroup.f_baseScale ; // * 0.001f;
+                    //movePattern.f3_position = f3_moveAbout + patternGroup.f_localPosition * patternGroup.f_baseScale * 3; // * 0.001f;
+                    // movePattern.f3_position = f3_moveAbout + patternGroup.f_localPosition * patternGroup.f_baseScale + new float3 (5,0,0) ; // * 0.001f;
+                    movePattern.f3_position = f3_moveAbout + patternGroup.f_localPosition * 3 + new float3 (5,0,0) ; // * 0.001f;
 
                     movePatternData.a_movePatterns [i] = movePattern ; // update
                             
@@ -217,9 +222,14 @@ namespace ECS.Blocks.Pattern
                             Blocks.Pattern.CompositeInPatternPrefabComponent blockCompositeBufferElement = Pattern.AddPatternPrefabSystem._GetCompositeFromPatternPrefab ( compositeComponent.i_inPrefabIndex ) ;
                         
                             // move composite
-                            Position position = new Position () ;
+                            Position position = new Position () ;                            
                             position.Value = blockCompositeBufferElement.f3_position * patternGroup.f_baseScale + movePattern.f3_position ;
+                            //position.Value = blockCompositeBufferElement.f3_position * 3 + movePattern.f3_position ;
+                            // movePattern.f3_position = f3_moveAbout + patternGroup.f_localPosition * patternGroup.f_baseScale + new float3 (5,0,0) ; // * 0.001f;
                             commandBuffer.SetComponent ( compositeEntity, position ) ;
+
+                            Scale scale = new Scale () { Value = blockCompositeBufferElement.f3_scale * patternGroup.f_baseScale } ;                             
+                            commandBuffer.SetComponent ( compositeEntity, scale ) ;
                         }
                     } // for
 
@@ -282,7 +292,7 @@ namespace ECS.Blocks.Pattern
                     PatternComponent patternGroup = movePatternData.a_compositePatternComponent [i] ;
                     //int i_ComponentsPatternIndex = compositePatternComponent.i_patternIndex ; 
 
-                    patternGroup.f_baseScale = 3 ;
+                    patternGroup.f_baseScale = 3 ; // test temp
                     movePatternData.a_compositePatternComponent [i] = patternGroup ;
 
                     MovePattern movePattern = movePatternData.a_movePatterns [i] ;
@@ -290,7 +300,7 @@ namespace ECS.Blocks.Pattern
                     //int i_entityBufferCount = movePatternData.a_compositeEntities [i].Length ;
 
                     //movePattern.f3_position = f3_moveAbout + new float3 (1,0,0) * i * patternGroup.f_baseScale + new float3 (5,0,0) ; // * 0.001f;
-                    movePattern.f3_position = f3_moveAbout + new float3 (1,0,0) * i * patternGroup.f_baseScale + new float3 (5,0,0) ; // * 0.001f;
+                    movePattern.f3_position = f3_moveAbout + patternGroup.f_localPosition * patternGroup.f_baseScale + new float3 (5,0,0) ; // * 0.001f;
                     movePatternData.a_movePatterns [i] = movePattern ; // update
                             
                     float f_distance = math.lengthSquared ( movePattern.f3_position ) ;
@@ -322,11 +332,9 @@ namespace ECS.Blocks.Pattern
                         // move composite
                         // Position position = new Position () ;
                         position.Value = blockCompositeBufferElement.f3_position * patternGroup.f_baseScale + movePattern.f3_position ;
-
                         commandBuffer.SetComponent ( compositeEntity, position ) ;
 
-                        Scale scale = new Scale () { Value = blockCompositeBufferElement.f3_scale * patternGroup.f_baseScale } ;
-                             
+                        Scale scale = new Scale () { Value = blockCompositeBufferElement.f3_scale * patternGroup.f_baseScale } ;                             
                         commandBuffer.SetComponent ( compositeEntity, scale ) ;
 
                         if ( f_distance > 10 )

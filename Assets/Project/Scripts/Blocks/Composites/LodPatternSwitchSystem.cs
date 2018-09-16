@@ -10,12 +10,12 @@ namespace ECS.Blocks.Pattern
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
 
-    //public class LodPatternBarrier : BarrierSystem {}
+    public class LodPatternSwitchBarrier : BarrierSystem {}
 
     // [UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
-    // [UpdateAfter(typeof(ReleaseCompositeBarrier))]
+    [UpdateAfter ( typeof ( LodPatternBarrier ) ) ]
     public class LodPatternSwitchSystem : JobComponentSystem
     {     
        
@@ -63,7 +63,7 @@ namespace ECS.Blocks.Pattern
 
             // Excludes entities that contain a MeshCollider from the group
             public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
-            // public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
+            public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
             public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
 
             public ComponentDataArray <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
@@ -77,7 +77,7 @@ namespace ECS.Blocks.Pattern
         
         
         [Inject] private ComponentDataFromEntity <Blocks.CompositeComponent> a_compositeComponents ;
-        [Inject] private Barrier compositeBarrier ;
+        [Inject] private LodPatternSwitchBarrier barrier ;
         static private float3 f3_moveAbout ;
                 
         protected override void OnCreateManager ( int capacity )
@@ -105,7 +105,7 @@ namespace ECS.Blocks.Pattern
         protected override JobHandle OnUpdate ( JobHandle inputDeps )
         {            
                     
-            EntityCommandBuffer commandBuffer = compositeBarrier.CreateCommandBuffer () ;
+            EntityCommandBuffer commandBuffer = barrier.CreateCommandBuffer () ;
 
             var lod010PatternSwitchJobHandle = new Lod010PatternSwitchDataJob // for IJobParallelFor
             {    

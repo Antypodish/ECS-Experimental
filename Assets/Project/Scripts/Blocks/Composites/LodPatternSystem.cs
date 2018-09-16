@@ -14,10 +14,12 @@ namespace ECS.Blocks.Pattern
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
     
+    public class LodPatternBarrier : BarrierSystem {} // required for conflicts avoidance (race condition)
+
     //[UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
-    // [UpdateAfter(typeof(ReleaseCompositeBarrier))]
+    [UpdateAfter ( typeof ( MoveCompositeBarrier ) ) ]
     public class LodPatternSystem : JobComponentSystem
     {     
 
@@ -54,6 +56,9 @@ namespace ECS.Blocks.Pattern
             [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.IsLodActiveTag> a_isLodActive ;
 
             public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
+            public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
             
 
             // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
@@ -76,12 +81,15 @@ namespace ECS.Blocks.Pattern
             [ReadOnly] public ComponentDataArray <Blocks.Pattern.Components.IsLodActiveTag> a_isLodActive ;
 
             public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
+            public SubtractiveComponent <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
 
             // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
 
         // 
-        [Inject] private Barrier lodBarrier ;
+        [Inject] private LodPatternBarrier lodBarrier ;
 
         static private EntityArchetype archetype ;
 
@@ -129,7 +137,7 @@ namespace ECS.Blocks.Pattern
             // create test target (soruce from which LOD is calculating a distance)
             Entity entity = EntityManager.CreateEntity ( archetype ) ;
 
-            EntityManager.SetComponentData ( entity, new Common.Components.Float3Component { f3 = new float3 ( 3f, 0, 0f ) } ) ;
+            EntityManager.SetComponentData ( entity, new Common.Components.Float3Component { f3 = new float3 ( 0f, 0, 0f ) } ) ;
             /*
             // create test entities to apply LOD
             entity = EntityManager.CreateEntity ( 
@@ -217,31 +225,20 @@ namespace ECS.Blocks.Pattern
             // public void Execute ()  // for IJob
             public void Execute ( int i )  // for IJobParallelFor
             {                
-                Debug.Log ( "Switch Lod010 for entity #" + data.a_entities [i].Index ) ;
                 
                 float3 f3_position = data.a_movePatterns [i].f3_position ;
                 float3 f3_positionDiff = f3_targetPosition - f3_position ;
                 
-                float f_distance = UnityEngine.Mathf.Sqrt ( 
-                    f3_positionDiff.x * f3_positionDiff.x +
-                    f3_positionDiff.y * f3_positionDiff.y + 
-                    f3_positionDiff.z * f3_positionDiff.z 
-                ) ;
+                float f_distance = math.sqrt ( math.lengthSquared ( f3_positionDiff ) ) ; // TODO: Optimise sqrt, for lookup
                 
-                Debug.Log ( "At Distance: " + (float)f_distance ) ;
                 float f_switch2NextLodDistance = a_switch2NextLodDistances [0] ;
                 float f_switch2PreviousLodDistance = a_switch2PreviousLodDistances [0] ;
 
-                // test
-                // Position pos = data.a_position [i] ;
-                //f3_position += new float3 ( 0.01f, 0, 0 ) ;
-                //data.a_position [i] = new Position () { Value = f3_position } ;
-                // Entity entity = data.a_entities [i] ;
-                //commandsBuffer.SetComponent ( entity, pos ) ;
-
-
                 if ( f_distance >= f_switch2NextLodDistance )
                 {
+                    Debug.Log ( "Switch Lod020 for entity #" + data.a_entities [i].Index ) ;
+                    Debug.Log ( f_distance ) ;
+
                     Entity jobEntity = data.a_entities [i] ;
                     // switch to next LOD
                     commandsBuffer.RemoveComponent <Blocks.Pattern.Components.Lod010Tag> ( jobEntity ) ;
@@ -277,7 +274,6 @@ namespace ECS.Blocks.Pattern
             // public void Execute ()  // for IJob
             public void Execute ( int i )  // for IJobParallelFor
             {
-                Debug.Log ( "Switch Lod020 for entity #" + data.a_entities [i].Index ) ;
                 
                 // Common.Components.LodComponent lodData = data.a_lod [i] ;
 
@@ -287,23 +283,11 @@ namespace ECS.Blocks.Pattern
                 float3 f3_position = data.a_movePatterns [i].f3_position ;
                 float3 f3_positionDiff = f3_targetPosition - f3_position ;
                 
-                float f_distance = UnityEngine.Mathf.Sqrt ( 
-                    f3_positionDiff.x * f3_positionDiff.x +
-                    f3_positionDiff.y * f3_positionDiff.y + 
-                    f3_positionDiff.z * f3_positionDiff.z 
-                ) ;
-
-                Debug.Log ( f_distance ) ;
+                float f_distance = math.sqrt ( math.lengthSquared ( f3_positionDiff ) ) ; // TODO: Optimise sqrt, for lookup
+                                
                 float f_switch2NextLodDistance = a_switch2NextLodDistances [1] ;
                 float f_switch2PreviousLodDistance = a_switch2PreviousLodDistances [1] ;
-                            
-                // test
-                // Position pos = data.a_position [i] ;
-                //f3_position -= new float3 ( 0.01f, 0, 0 ) ;
-                // Entity entity = data.a_entities [i] ;
-                //commandsBuffer.SetComponent ( entity, pos ) ;
-                //data.a_position [i] = new Position () { Value = f3_position } ;
-
+                        
                 if ( f_distance >= f_switch2NextLodDistance )
                 {
                     // TODO: switch to next LOD
@@ -313,6 +297,9 @@ namespace ECS.Blocks.Pattern
                 }
                 else if ( f_distance <= f_switch2PreviousLodDistance )
                 {
+                    Debug.Log ( "Switch Lod020 for entity #" + data.a_entities [i].Index ) ;
+                    Debug.Log ( f_distance ) ;
+
                     Entity jobEntity = data.a_entities [i] ;
                     // Switch to lower LOD
                     commandsBuffer.RemoveComponent <Blocks.Pattern.Components.Lod020Tag> ( jobEntity ) ;

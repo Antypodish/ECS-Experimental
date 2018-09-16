@@ -7,7 +7,7 @@ using Unity.Collections ;
 using Unity.Jobs ;
 using Unity.Burst ;
 
-namespace ECS.Blocks
+namespace ECS.Blocks.Pattern
 {
     //[UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     class EnableCompositeSystem : JobComponentSystem

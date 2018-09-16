@@ -31,6 +31,7 @@ namespace ECS.Blocks
         /// Base scale, to which owned entity compnents, are scalled accordingly.
         /// </summary>
         public float f_baseScale ;
+        public float3 f_localPosition ;
     }
         
     public struct MovePattern : IComponentData 

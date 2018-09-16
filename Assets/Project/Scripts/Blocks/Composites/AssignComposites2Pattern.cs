@@ -7,11 +7,12 @@ using Unity.Collections ;
 using Unity.Jobs ;
 using Unity.Burst ;
 
+// TODO: this ssystem probably runs continously. Should run only based on Request of pattern. Not based on available spares
 namespace ECS.Blocks.Pattern
 {
-    [UpdateAfter ( typeof ( ReleasePatternBarrier ) ) ]
-    [UpdateAfter ( typeof ( LodPatternSwitchBarrier ) ) ]
-    class CompositeSystem : JobComponentSystem
+    // [UpdateAfter ( typeof ( ReleasePatternBarrier ) ) ]
+    // [UpdateAfter ( typeof ( LodPatternSwitchBarrier ) ) ]
+    class AssignComposites2Pattern : JobComponentSystem
     {
 
         [Inject] private RequestPatternSetupData requestPatternSetupData ;  
@@ -25,17 +26,16 @@ namespace ECS.Blocks.Pattern
 
             public ComponentDataArray <Blocks.PatternComponent> a_compositesInPattern ;
             public BufferArray <Common.BufferElements.EntityBuffer> a_entityBuffer ;
-
-            public ComponentDataArray <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
-
+            
             /// <summary>
             /// Tag requires composte pattern commponent to be set 
             /// </summary>            
-            public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ;  
+            public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ; // this tag is removed in this system
+            public ComponentDataArray <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ; // this tag is removed in this system
 
-            public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
+            public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_isLodSwitchedTag ;
             
-            [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
+           // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
 
         
@@ -55,31 +55,27 @@ namespace ECS.Blocks.Pattern
             
             // [ReadOnly] public ComponentDataArray <Common.Components.Lod01Tag> a_compositePatternTag ;
 
-            public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
-            
-            [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
-
+            // public SubtractiveComponent <Blocks.Pattern.Components.IsLodSwitchedTag> a_isLodSwitchedTag ;
         }
-        
+
         // [Inject] private ComponentDataArray <Common.Components.IsNotAssignedTag> a_isNotAssignedTag ;
         [Inject] private Barrier compositeBarrier ;
-
         
-        static private EntityManager entityManager ;
-        static private EntityArchetype archetype ;
+
+        //static private EntityManager entityManager ;
+        //static private EntityArchetype newCompositeSpareArchetype ;
+
+        //static private EntityManager entityManager ;
 
         protected override void OnCreateManager ( int capacity )
         {
-            entityManager = World.Active.GetOrCreateManager <EntityManager>() ;
-
-            archetype = EntityManager.CreateArchetype (   
+            /*
+            newCompositeSpareArchetype = EntityManager.CreateArchetype (   
                 typeof ( Blocks.CompositeComponent ),
                 typeof ( Common.Components.IsNotAssignedTag ),
                 typeof ( Common.Components.Lod01Tag )
-
-                // typeof ( Position ),
-                // typeof ( Common.Components.Lod01Tag )
             ) ;
+            */
 
             base.OnCreateManager ( capacity );
         }
@@ -88,145 +84,28 @@ namespace ECS.Blocks.Pattern
         {            
             base.OnDestroyManager ( );
         }
-        
-        // static bool isAddingSparesCompositesRequested = false ;
-        // static bool isAddingSparesCompositesRequested2 = false ;
-        static bool isSpareAssigned2PaternBool = false ;
-        static bool iSpareBeenAdded = false ;
-        static bool iResetInitiated = false ;
 
         protected override JobHandle OnUpdate ( JobHandle inputDeps )
         {
             EntityCommandBuffer commandBuffer = compositeBarrier.CreateCommandBuffer () ;
              
-            
-            // Reset 
-            // Finalize task
-            if ( isSpareAssigned2PaternBool & iSpareBeenAdded )
-            {
-                //Debug.Log ( "B: " + requestPatternSetupData.Length ) ;
-                if ( requestPatternSetupData.Length == 0 )
-                {
-                    isSpareAssigned2PaternBool = false ; // reset
-                    iSpareBeenAdded = false ; // reset
-                    iResetInitiated = false ; // reset
+            //Debug.Log ( "A" ) ;
+            var reqJobHandle2 = new AssignComposites2PatternGroupJob
+            {                
+                commandBuffer = commandBuffer,
 
-                    World.Active.GetOrCreateManager<CompositeSystem>().Enabled = false;
-                    World.Active.GetOrCreateManager<EnableCompositeSystem>().Enabled = true ;
-
-                    //Debug.Log ( "Reset A" ) ;
-                }
-                else if ( !iResetInitiated ) // one shot
-                {
-                    // reset request patterns tags
-                    
-                    for (int i_patternGroupIndex = 0; i_patternGroupIndex < requestPatternSetupData.Length; ++i_patternGroupIndex )
-                    {
-                        Entity paternGroupEntity = requestPatternSetupData.a_entities [i_patternGroupIndex] ;
-                        commandBuffer.RemoveComponent <Blocks.Pattern.RequestPatternSetupTag> ( paternGroupEntity ) ;
-                        commandBuffer.RemoveComponent <Common.Components.IsNotAssignedTag> ( paternGroupEntity ) ;
-                    }
-                        
-                    iResetInitiated = true ;
-                }
-
-                return inputDeps ;
-            }
+                requestPatternSetupData = requestPatternSetupData,
+                a_spareCompoisteEntities = spareCompositeData.a_entities,
+            } ;
                 
-
-            // Add required spares, for later assignment into pattern group.
-            if ( !isSpareAssigned2PaternBool && !iSpareBeenAdded )
-            {
-                float f_compositeSize = 0.1f ;
-
-                //Debug.Log ( "C" ) ;
-                var reqJobHandle = new AddRequiredSpareCompositesJob
-                {                
-                    commandBuffer = commandBuffer,
-
-                    requestPatternSetupData = requestPatternSetupData,
-                    a_spareCompoisteEntities = spareCompositeData.a_entities, 
-                    
-                    f_compositeSize = f_compositeSize,
-                } ;
+            reqJobHandle2.Schedule (inputDeps).Complete () ;           
                 
-                reqJobHandle.Schedule(inputDeps).Complete () ;
-
-                iSpareBeenAdded = true  ;
-
-                return inputDeps ;
-            }
-
-
-            // assign composite to pattern group
-            if ( iSpareBeenAdded && spareCompositeData.Length > 0 && !isSpareAssigned2PaternBool )
-            {
-                //Debug.Log ( "A" ) ;
-                var reqJobHandle2 = new AssignComposites2PatternGroupJob
-                {                
-                    commandBuffer = commandBuffer,
-
-                    requestPatternSetupData = requestPatternSetupData,
-                    a_spareCompoisteEntities = spareCompositeData.a_entities,
-                } ;
-                
-                reqJobHandle2.Schedule (inputDeps).Complete () ;           
-                
-                isSpareAssigned2PaternBool = true ;
-
-                return inputDeps ;
-            }
-             
-            
             return inputDeps ;
             
         }
 
 
-        /// <summary>
-        /// Execute Jobs
-        /// </summary>
-        // [BurstCompile]
-        struct AddRequiredSpareCompositesJob : IJob
-        // struct CollisionJob : IJobParallelFor // example of job parallel for
-        {
-            //public bool isBool;
-            
-            public EntityCommandBuffer commandBuffer ;
-
-            // [ReadOnly] public EntityArray a_entities;
-            // [ReadOnly] public ComponentDataArray <BlockSetHighlightTag> a_setBlockHighlight ;
-            
-            public RequestPatternSetupData requestPatternSetupData ; // primary
-            // public SpareCompositeData spareCompositeData ; // secondary
-            public EntityArray a_spareCompoisteEntities ;
-            
-            public float f_compositeSize ;
-
-            public void Execute ()
-            {
-                EntityArray a_patternEntities = requestPatternSetupData.a_entities ;
-
-                int i_spareCompositesCount = a_spareCompoisteEntities.Length ; 
-
-                // Debug.Log ( "aa: " + requestPatternSetupData.Length ) ;
-                Debug.Log ( "i_spareCompositesCount: " + i_spareCompositesCount ) ;
-
-                int i_totalRequiredCompositesCount = requestPatternSetupData.Length * Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup ;
-                int i_need2AddCompositesCount = i_totalRequiredCompositesCount - i_spareCompositesCount ;
-
-                for (int i_newSpareCompositeIndex = 0; i_newSpareCompositeIndex < i_need2AddCompositesCount; ++i_newSpareCompositeIndex )
-                {                    
-                    _AddNewSpareComposites ( commandBuffer, f_compositeSize ) ;
-                                                                    
-                } // for
-                
-            }
-
-        }
-
-
-        /// <summary>
+       /// <summary>
         /// Execute Jobs
         /// </summary>
         // [BurstCompile]
@@ -246,35 +125,47 @@ namespace ECS.Blocks.Pattern
 
             public void Execute ()
             {
-                isSpareAssigned2PaternBool = false ;
-
-                EntityArray a_patternEntities = requestPatternSetupData.a_entities ;
 
                 int i_spareCompositesCount = a_spareCompoisteEntities.Length ; 
 
-                Debug.Log ( "requestPatternSetupData length: " + requestPatternSetupData.Length ) ;
-                Debug.Log ( "i_spareCompositesCount: " + i_spareCompositesCount ) ;
+                // Debug.Log ( "requestPatternSetupData length: " + requestPatternSetupData.Length ) ;
+                // Debug.Log ( "i_spareCompositesCount: " + i_spareCompositesCount ) ;
 
-                for (int i_patternGroupIndex = 0; i_patternGroupIndex < a_patternEntities.Length; ++i_patternGroupIndex )
+                int i_totalRequiredCompositesCount = requestPatternSetupData.Length * Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup ;
+                int i_need2AddCompositesCount = i_totalRequiredCompositesCount - i_spareCompositesCount ;
+
+                // Ensure I have enough spares, before assigning them.
+                // Of not enough, wait, untill ienough will be created.
+                if ( i_need2AddCompositesCount <= 0 )
                 {
-                                            
-                    // Debug.Log ( "i_entityIndex: " + i_entityIndex ) ;
-                    // get composites spares start index in patterns, for current indexx
-                    int i_spareEntitiesOffsetIndex = i_patternGroupIndex * Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup ;
-                        
-                    if ( i_spareCompositesCount >= i_spareEntitiesOffsetIndex + Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup )
+
+                    for (int i_patternGroupIndex = 0; i_patternGroupIndex < requestPatternSetupData.Length; ++i_patternGroupIndex )
                     {
-                        // got enough composites
-                        // Assign now to requested patern group entity
-                        _AssignComposites2Pattern ( commandBuffer, requestPatternSetupData, i_patternGroupIndex, a_spareCompoisteEntities ) ;                              
-                    }
+                                            
+                        // Debug.Log ( "i_entityIndex: " + i_entityIndex ) ;
+                        // get composites spares start index in patterns, for current indexx
+                        int i_spareEntitiesOffsetIndex = i_patternGroupIndex * Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup ;
+                        
+                        if ( i_spareCompositesCount >= i_spareEntitiesOffsetIndex + Pattern.AddPatternPrefabSystem.i_compositesCountPerPatternGroup )
+                        {
+                            // got enough composites
+                            // Assign now to requested patern group entity
+                            _AssignComposites2Pattern ( commandBuffer, requestPatternSetupData, i_patternGroupIndex, a_spareCompoisteEntities ) ;                              
+                        }
                        
-                } // for
+                        // assumes assignemnt of spares to pattern group has been successful
+
+                        Entity paternGroupEntity = requestPatternSetupData.a_entities [i_patternGroupIndex] ;
+                        commandBuffer.RemoveComponent <Blocks.Pattern.RequestPatternSetupTag> ( paternGroupEntity ) ;
+                        commandBuffer.RemoveComponent <Common.Components.IsNotAssignedTag> ( paternGroupEntity ) ;
+
+                    } // for
+
+                }
                 
             }
 
         }
-
 
         /// <summary>
         /// Assigns composite patter, to selected entity
@@ -305,7 +196,6 @@ namespace ECS.Blocks.Pattern
                 // get element from patern prefab to copy into group
                 int i_compositeInPrefabIndex = i_patternOffsetIndex + i_spareEntityIndex ;
                 Blocks.Pattern.CompositeInPatternPrefabComponent compositeInPatternPrefab = Pattern.AddPatternPrefabSystem.a_patternPrefabs [ i_compositeInPrefabIndex ] ;
-                //Debug.Log ( "B: " + i_spareEntityIndex ) ;
 
                 // This composite is different type as previous composite. 
                 // This composite mesh will be scaled, to overlap next composite, if the type is the same.
@@ -386,26 +276,6 @@ namespace ECS.Blocks.Pattern
             return commandBuffer ;
         }
 
-
-
-        // Add set of new composites, according to selected pattern group
-        static private EntityCommandBuffer _AddNewSpareComposites ( EntityCommandBuffer commandBuffer, float f_scale )
-        {
-            float3 f3_scale = new float3 ( 1,1,1 ) * f_scale ;
-
-            commandBuffer.CreateEntity ( archetype ) ;
-                              
-            Test02.AddBlockSystem._AddBlockRequestViaCustomBufferNoNewEntity ( 
-                commandBuffer,
-                //element.f3_position,
-                float3.zero, // none initial position                    
-                f3_scale,
-                float3.zero, new Entity (),
-                new float4 (1,1,1,1)                            
-            ) ;
-
-            return commandBuffer ;
-        }
-
     }
 }
+

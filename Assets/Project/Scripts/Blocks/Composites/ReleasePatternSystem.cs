@@ -12,10 +12,12 @@ namespace ECS.Blocks.Pattern
     // Creates prefab composites groups, to be utilised later by blocks
     // Each composite group holds number of components, creating pattern.
     
+    public class ReleasePatternBarrier : BarrierSystem {} // required for conflicts avoidance (race condition)
+
     //[UpdateAfter ( typeof ( UnityEngine.Experimental.PlayerLoop.FixedUpdate ) ) ]
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
-    // [UpdateAfter(typeof(Barrier))]
-    [UpdateAfter(typeof(MoveCompositeBarrier))] // ensures no conflict
+    [UpdateAfter ( typeof ( LodPatternSwitchBarrier ) ) ]
+    [UpdateAfter ( typeof ( MoveCompositeBarrier ) ) ] // ensures no conflict
     public class ReleasePatternSystem : JobComponentSystem
     {     
         [Inject] private ReleasePatternData releasePatternData ;  
