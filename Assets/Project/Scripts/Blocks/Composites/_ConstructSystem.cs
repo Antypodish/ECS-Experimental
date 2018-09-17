@@ -16,7 +16,7 @@ namespace ECS.Blocks.Pattern
     // [UpdateAfter ( typeof ( GravitySystem ) ) ]    
     // [UpdateAfter(typeof(Barrier))]
     // [UpdateAfter(typeof(ReleaseCompositeBarrier))]
-    public class InitializePatternSystem : JobComponentSystem
+    public class ConstructSystem : JobComponentSystem
     {     
 
         [Inject] private InitializePatternSetupData initializePatternSetupData ;  
@@ -37,10 +37,10 @@ namespace ECS.Blocks.Pattern
             /// Tag requires composte pattern commponent to be set 
             /// </summary>            
             // public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ;  
-        }
-            
-        [Inject] private MoveCompositeBarrier compositeBarrier ;
 
+            [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
+        }
+                  
         // test temp
         // add some pattern groups from pattern prefabs
         static private int i_patternGroups = 8 ;
@@ -48,8 +48,6 @@ namespace ECS.Blocks.Pattern
         static private EntityArchetype archetype ;
 
         static private Unity.Mathematics.Random random = new Unity.Mathematics.Random () ;
-
-        
 
         protected override void OnCreateManager ( int capacity )
         {
@@ -111,8 +109,6 @@ namespace ECS.Blocks.Pattern
 
                     // Debug.Log ( "rand2 (random pattern getting not working) : " + Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ;
 
-                    EntityCommandBuffer commandBuffer = compositeBarrier.CreateCommandBuffer () ;
-
                     // test temp
                     // add some pattern groups from pattern prefabs
                     // int i_patternGroups = 1 ;
@@ -125,35 +121,16 @@ namespace ECS.Blocks.Pattern
 
                         // Debug.Log ( "rand2 (random pattern getting not working) : " + random.NextInt ( 0, i_patternGroups ) ) ;
 
-                        // Entity entity = EntityManager.CreateEntity ( archetype ) ; // store data about composite patterns groups
-
-                        
-                        int i_randomPattern = UnityEngine.Random.Range ( 0, Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ; // get random pattern (temp)
-                        int i_patternIndex = i_randomPattern ; // random is temp
-                        float f_baseScale = i < 4 ? 2f : 8f ;
-                        float3 f3_localPosition = new float3 ( 1, 0, 0 ) * i ;
-                        int i_lodDepth = i < 4 ? 0 : 1 ;
-                        i_randomPattern = UnityEngine.Random.Range ( 0, Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ; // get random pattern (temp)
-                        int i_prefabIndex = i_randomPattern ; // used for lower level of details
-                        
-                        _AddNewPatternSystem ( commandBuffer, i_patternIndex, f_baseScale, f3_localPosition, i_lodDepth, i_prefabIndex ) ;
-
-                            /*
-                        commandBuffer.CreateEntity ( archetype ) ; // store data about composite patterns groups
-                        
-                        PatternComponent patternComponent = new Blocks.PatternComponent () { 
+                        Entity entity = EntityManager.CreateEntity ( archetype ) ; // store data about composite patterns groups
+                        int i_radomPattern = UnityEngine.Random.Range ( 0, Pattern.AddPatternPrefabSystem.i_currentPrefabsCount ) ; // get random pattern
+                        EntityManager.AddComponentData ( entity, new Blocks.PatternComponent () { 
                             //i_patternIndex = random.NextInt ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ), // get random prefab pattern
-                            i_patternIndex = i_randomPattern,            
+                            i_patternIndex = i_radomPattern,            
                             //i_patternIndex = random.NextInt ( 0, 3 )
                             f_baseScale = 2f,
-                            f3_localPosition = new float3 ( 1, 0, 0 ) * i,
-                            i_lodDepth = 0 // set default depth level
+                            f3_localPosition = new float3 ( 1, 0, 0 ) * i
 
-                        } ;
-
-                        commandBuffer.AddComponent <PatternComponent> ( patternComponent ) ;
-                        */
-                        
+                        } ) ;
 
                         /*
                         if ( i == 5 )
@@ -173,22 +150,6 @@ namespace ECS.Blocks.Pattern
        }
 
 
-        static public void _AddNewPatternSystem ( EntityCommandBuffer commandBuffer, int i_patternIndex, float f_baseScale, float3 f3_localPosition, int i_lodDepth, int i_prefabIndex  )
-        {
-            commandBuffer.CreateEntity ( archetype ) ; // store data about composite patterns groups
-                        
-            PatternComponent patternComponent = new Blocks.PatternComponent () { 
-                //i_patternIndex = random.NextInt ( 0, Pattern.PatternPrefabSystem.i_currentPrefabsCount ), // get random prefab pattern
-                i_patternIndex = i_patternIndex,            
-                //i_patternIndex = random.NextInt ( 0, 3 )
-                f_baseScale = f_baseScale,
-                f3_localPosition = f3_localPosition,
-                i_lodDepth = 0, // set default depth level
-                i_prefabIndex = i_prefabIndex
-            } ;
-
-            commandBuffer.AddComponent <PatternComponent> ( patternComponent ) ;
-        }
     }
 
     

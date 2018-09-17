@@ -20,6 +20,7 @@ namespace ECS.Blocks
         public int i_inPrefabIndex ;
     }
 
+    // public struct PatternIsNotAssignedTag : IComponentData {} ;
     public struct AssignComposites2PatternTag : IComponentData { }
 
 
@@ -31,7 +32,20 @@ namespace ECS.Blocks
         /// Base scale, to which owned entity compnents, are scalled accordingly.
         /// </summary>
         public float f_baseScale ;
-        public float3 f_localPosition ;
+        public float3 f3_localPosition ;
+
+        /// <summary>
+        /// Describes depth level of Lod.
+        /// 0 is the defualt depth level
+        /// Negative value indicated greater depth level, with higher details (zoom in)
+        /// Positive value indicates lower depth level, with simplified details (zoom out)
+        /// </summary>
+        public int i_lodDepth ;
+
+        /// <summary>
+        /// Used composite prefab ID, when lower level of detail is switched
+        /// </summary>        
+        public int i_prefabIndex ;
     }
         
     public struct MovePattern : IComponentData 

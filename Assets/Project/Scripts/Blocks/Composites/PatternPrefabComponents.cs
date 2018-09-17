@@ -13,7 +13,7 @@ namespace ECS.Blocks.Pattern
     public struct CompositeInPatternPrefabComponent : IBufferElementData
     { 
         // entity owned by this block composite
-        public int i_compositePrefabIndex ; // not used yet
+        public int i_compositePrefabIndex ;
 
         // used prefab ID
         // public int i_prefabId ;
@@ -44,6 +44,11 @@ namespace ECS.Blocks.Pattern
 
     public struct RequestPatternReleaseTag : IComponentData { } ;
 
-    public struct RequestPatternSetupTag : IComponentData { } ;
+    public struct RequestPatternSetupTag : IComponentData { } ; // Sub meshes setup for ceomposites
+
+    public struct RequestPatternMainMeshSetupTag : IComponentData { } ; // main mesh setup
+
+    // public struct PatternIsNotAssignedTag : IComponentData { } ;
+    
 
 }

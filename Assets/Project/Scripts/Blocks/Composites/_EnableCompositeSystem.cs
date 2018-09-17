@@ -31,15 +31,15 @@ namespace ECS.Blocks.Pattern
             public ComponentDataArray <Blocks.Pattern.RequestPatternSetupTag> a_requestPatternSetupTag ;  
             
             public SubtractiveComponent <Blocks.Pattern.RequestPatternReleaseTag> a_requestPatternReleaseTag ;
-            // [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
+             [ReadOnly] public ComponentDataArray <Disabled> a_disabled ;
         }
         
         protected override JobHandle OnUpdate ( JobHandle inputDeps )
         {          
             if ( requestPatternSetupData.Length > 0 )
             {
-                World.Active.GetOrCreateManager<CompositeSystem>().Enabled = true ;
-                World.Active.GetOrCreateManager<EnableCompositeSystem>().Enabled = false ;
+                //World.Active.GetOrCreateManager<CompositeSystem>().Enabled = true ;
+                //World.Active.GetOrCreateManager<EnableCompositeSystem>().Enabled = false ;
             }
                 
             return inputDeps ;            

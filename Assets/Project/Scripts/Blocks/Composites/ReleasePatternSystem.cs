@@ -37,15 +37,6 @@ namespace ECS.Blocks.Pattern
             // release composites from the group and the grup itself
             public ComponentDataArray <Blocks.Pattern.RequestPatternReleaseTag> a_releasePattern ;
 
-            // Excludes entities that contain a MeshCollider from the group
-            // public SubtractiveComponent <Blocks.Pattern.RequestPatternSetupTag> a_notSetupTag ;
-
-            /// <summary>
-            /// Tag requires composte pattern commponent to be set 
-            /// </summary>            
-            //public ComponentDataArray <Blocks.RequestPatternSetupTag> a_requestPatternSetupTag ;  
-
-            // public ComponentDataArray <Common.Components.DisableSystemTag> a_disbaledSystemTag ;
         }
 
         [Inject] private Barrier compositeBarrier ;
@@ -53,14 +44,8 @@ namespace ECS.Blocks.Pattern
         //static private EntityCommandBuffer commandBuffer ;
         static private EntityManager entityManager ;
 
-        //static private EntityArchetype archetype ;
-
         static private Unity.Mathematics.Random random = new Unity.Mathematics.Random () ;
         
-
-        //static private int i_compositesCountPerPatternGroup = 10 ;
-        
-        //static private NativeArray <ECS.Blocks.BlockCompositeBufferElement> a_compositesPatternPrefabs ; // default
 
         protected override void OnCreateManager ( int capacity )
         {
@@ -79,29 +64,12 @@ namespace ECS.Blocks.Pattern
         
         
         protected override JobHandle OnUpdate ( JobHandle inputDeps )
-        {            
-            /*
-            var movePatternDataJobHandle = new MovePatternDataJob // for IJobParallelFor
-            {    
-                commandBuffer = compositeBarrier.CreateCommandBuffer (),
-                movePatternData = movePatternData,
-                random = random
-                //requestPatternSetupData = requestPatternSetupData,
-                //spareCompositeData = spareCompositeData,
-                
-                
-            } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
-            */
-            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( movePatternData.Length, 64, inputDeps ) ;
-            // JobHandle mergeJobHandle = movePatternDataJobHandle.Schedule ( inputDeps ) ;
+        {     
 
             var releasePatternDataJobHandle = new ReleasePatternDataJob // for IJobParallelFor
             {    
                 commandBuffer = compositeBarrier.CreateCommandBuffer (),
-                releasePatternData = releasePatternData,
-                //requestPatternSetupData = requestPatternSetupData,
-                //spareCompositeData = spareCompositeData,
-                
+                releasePatternData = releasePatternData,               
                 
             } ; // .Schedule (inputDeps) ; // .Schedule( lod01Data.Length, 64, inputDeps) ; // IJobParallelFor
 
@@ -120,15 +88,9 @@ namespace ECS.Blocks.Pattern
         {
             public EntityCommandBuffer commandBuffer ; // concurrent is required for parallel job
             
-            // public EntityArray a_entities;     
-            
-            //public SpareCompositeData spareCompositeData ;            
-            // public RequestPatternSetupData requestPatternSetupData ;
             public ReleasePatternData releasePatternData ;
 
-            // public Unity.Mathematics.Random random ;
-
-                      // Blocks.MovePatternComonent
+            
             public void Execute ()  // for IJob
             // public void Execute ( int i )  // for IJobParallelFor
             {       
@@ -163,19 +125,7 @@ namespace ECS.Blocks.Pattern
                 // Set as not assigned
                 // And reset position
                 _ReleaseCompositesFromPatternRequest ( commandBuffer, compositeEntityBuffer ) ;
-                // set as not assigned
-                //commandBuffer.AddComponent ( compositeEntityBuffer.entity, new Common.Components.IsNotAssignedTag () ) ;
-                // reset position
-                //commandBuffer.SetComponent ( compositeEntityBuffer.entity, new Position () { Value = new float3 (2,1,1) }  ) ;
-
-                //Common.BufferElements.EntityBuffer entityBuffer = movePatternData.a_compositeEntities [i][i_bufferIndex] ;
-                        
-                  //      Entity compositeEntity = entityBuffer.entity ;
             }
-            
-            //BlockCompositeBufferElement blockCompositeBufferElement = CompositeSystem._GetCompositeFromPatternPrefab ( i_prefabIndex ) ;
-            //blockCompositeBufferElement.
-            // CompositeSystem._ReleaseCompositesFromPrefab ( i_prefabIndex ) ;
 
             // fiinally clear store of detached compoenents
             a_compositeEntities [i_prefabIndex].Clear () ;
